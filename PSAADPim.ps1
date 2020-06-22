@@ -163,7 +163,7 @@ function Get-PimAzRoledefinitionId {
         [Parameter (Mandatory = $true)]
         [guid] $azsubscriptionid,
         [Parameter(Mandatory = $true)]
-        [string] $azroledefinitionid
+        [guid] $azroledefinitionid
     )
     try {
         #Get PIM resourceid of the az subscription
@@ -205,7 +205,7 @@ function Get-PimAzRoleSettingId {
         [Parameter (Mandatory = $true)]
         [guid] $azsubscriptionid,
         [Parameter(Mandatory = $true)]
-        [string] $azroledefinitionid
+        [guid] $azroledefinitionid
     )
     try {
         #Get PIM resourceid of the az subscription
