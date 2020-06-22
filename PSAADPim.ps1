@@ -130,7 +130,7 @@ function Get-PimAzSubscriptionId {
     }
     try {
         #Get PIM resourceid of the az subscription
-        $subidfilterstring = "ExternalId" + " " + "eq" + " " + "'" + "/subscriptions/" + "$azsubscriptionid" + "'"
+        $subidfilterstring = "ExternalId eq '/subscriptions/$azsubscriptionid'"
         $pimazsubid = Get-AzureADMSPrivilegedResource -ProviderId AzureResources -Filter $subidfilterstring | Select-Object Id, ExternalId, Type, DisplayName, Status
         if ($pimazsubid -eq $null) {
             Write-Error -Message "Azure subscription $azsubscriptionid is not found in PIM"
@@ -169,7 +169,7 @@ function Get-PimAzRoledefinitionId {
         #Get PIM resourceid of the az subscription
         $pimazsubid = Get-PimAzSubscriptionId -azsubscriptionid $azsubscriptionid
         #Construct role id filter
-        $roleidfilterstring = "ExternalId" + " " + "eq" + " " + "'" + "/subscriptions/" + "$azsubscriptionid" + "/providers/Microsoft.Authorization/roleDefinitions/" + "$azroledefinitionid" + "'"
+        $roleidfilterstring = "ExternalId eq '/subscriptions/$azsubscriptionid/providers/Microsoft.Authorization/roleDefinitions/$azroledefinitionid'"
         #Get role information
         $pimazroleid = Get-AzureADMSPrivilegedRoleDefinition -ProviderId AzureResources -ResourceId $pimazsubid.Id  -Filter $roleidfilterstring | Select-Object Id, ResourceId, ExternalId, DisplayName
         return $pimazroleid
@@ -213,7 +213,7 @@ function Get-PimAzRoleSettingId {
         #Get PIM resourceid for the az roledefinitionid
         $pimazroleid = Get-PimAzRoledefinitionId -azsubscriptionid $azsubscriptionid -azroledefinitionid $azroledefinitionid
         #Construct rolesetting id filter
-        $rolesettingidstring = "ResourceId eq " + "'" + "$($pimazsubid.id)" + "'" + " and RoleDefinitionId eq " + "'" + "$($pimazroleid.id)" + "'"
+        $rolesettingidstring = "ResourceId eq '$($pimazsubid.id)' and RoleDefinitionId eq '$($pimazroleid.id)'"
         #Get role setting information
         $pimazrolesettingid = Get-AzureADMSPrivilegedRoleSetting -ProviderId AzureResources -Filter $rolesettingidstring
         return $pimazrolesettingid
@@ -240,7 +240,7 @@ function New-PimAzSubscriptionEnrollment {
     )
     try {
         #Check if Azure subscription exist
-        Get-AzSubscription -SubscriptionId $azsubscriptionid -ErrorAction Stop
+        Get-AzSubscription -SubscriptionId $azsubscriptionid
     }
     catch {
         Write-Error -Message $_
@@ -291,6 +291,9 @@ function Set-PimAzSubscriptionRoleSetting {
         [Parameter (Mandatory = $true)]
         [guid] $azsubscriptionid,
         [Parameter(Mandatory = $true)]
+        [ValidateScript({
+            $_ | ConvertFrom-Json
+        })]
         [array] $azroledefids,
         [Parameter(Mandatory = $true)]
         $settingsprofile
@@ -411,8 +414,14 @@ function New-PimAzRoleAssignment {
         [Parameter (Mandatory = $true)]
         [guid] $azsubscriptionid,
         [Parameter(Mandatory = $true)]
+        [ValidateScript({
+            $_ | ConvertFrom-Json
+        })]
         [array] $azroledefids,
         [Parameter(Mandatory = $true)]
+        [ValidateScript({
+            $_ | ConvertFrom-Json
+        })]
         [array] $aadgroups,
         [Parameter(Mandatory = $true)]
         [ValidateSet("Eligible", "Active", IgnoreCase = $false)]
@@ -452,7 +461,7 @@ function New-PimAzRoleAssignment {
             try {
                 if ($assignmenttype -eq "Eligible") {
                     #Check if group already added
-                    $groupstatefilterstring = "RoleDefinitionId" + " " + "eq" + " " + "'" + "$($pimazroleid.Id)" + "'" + " " + "and" + " " + "SubjectId" + " " + "eq" + " " + "'" + "$($group.ObjectId)" + "'"
+                    $groupstatefilterstring = "RoleDefinitionId eq '$($pimazroleid.Id)' and SubjectId eq '$($group.ObjectId)'"
                     $groupstatecheck = Get-AzureADMSPrivilegedRoleAssignment -ProviderId AzureResources -ResourceId $pimazsubid.Id -Filter $groupstatefilterstring
                     if ($groupstatecheck.AssignmentState -eq "Eligible") {
                         Write-Output -InputObject "This group: $($group.ObjectId) with this role: $($roleid.Id) already seem to have an $assignmenttype assignment, skipping add operation. Please check this group assignment manually"
@@ -473,7 +482,7 @@ function New-PimAzRoleAssignment {
                 }
                 if ($assignmenttype -eq "Active") {
                     #Check if group already added
-                    $groupstatefilterstring = "RoleDefinitionId" + " " + "eq" + " " + "'" + "$($pimazroleid.Id)" + "'" + " " + "and" + " " + "SubjectId" + " " + "eq" + " " + "'" + "$($group.ObjectId)" + "'"
+                    $groupstatefilterstring = "RoleDefinitionId eq '$($pimazroleid.Id)' and SubjectId eq '$($group.ObjectId)'"
                     $groupstatecheck = Get-AzureADMSPrivilegedRoleAssignment -ProviderId AzureResources -ResourceId $pimazsubid.Id -Filter $groupstatefilterstring
                     if ($groupstatecheck.AssignmentState -eq "Active") {
                         Write-Output -InputObject "This group: $($group.ObjectId) with this role: $($roleid.Id) already seem to have an $assignmenttype assignment, skipping add operation. Please check this group assignment manually"
