@@ -291,9 +291,6 @@ function Set-PimAzSubscriptionRoleSetting {
         [Parameter (Mandatory = $true)]
         [guid] $azsubscriptionid,
         [Parameter(Mandatory = $true)]
-        [ValidateScript({
-            $_ | ConvertFrom-Json
-        })]
         [array] $azroledefids,
         [Parameter(Mandatory = $true)]
         $settingsprofile
@@ -414,14 +411,8 @@ function New-PimAzRoleAssignment {
         [Parameter (Mandatory = $true)]
         [guid] $azsubscriptionid,
         [Parameter(Mandatory = $true)]
-        [ValidateScript({
-            $_ | ConvertFrom-Json
-        })]
         [array] $azroledefids,
         [Parameter(Mandatory = $true)]
-        [ValidateScript({
-            $_ | ConvertFrom-Json
-        })]
         [array] $aadgroups,
         [Parameter(Mandatory = $true)]
         [ValidateSet("Eligible", "Active", IgnoreCase = $false)]

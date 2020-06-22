@@ -63,11 +63,17 @@ Param
         })]
     [string] $azsubscriptionid,
     [Parameter (Mandatory = $true)]
+    [ValidateScript({
+        $_ | ConvertFrom-Json
+    })]
     [array] $azroledefids,
     [Parameter (Mandatory = $true)]
     [ValidateSet("mediumprofile", "lightprofile")]
     [string] $roleprofile,
     [Parameter (Mandatory = $true)]
+    [ValidateScript({
+        $_ | ConvertFrom-Json
+    })]
     [array] $aadgroups,
     [Parameter (Mandatory = $false)]
     [switch] $onlyaddaadgroups,
