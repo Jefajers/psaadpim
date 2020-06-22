@@ -118,20 +118,11 @@ function Get-PimAzSubscriptionId {
     #>
     param(
         [Parameter (Mandatory = $true)]
-        [ValidateScript( {
-                try {
-                    [System.Guid]::Parse($_) | Out-Null
-                    $true
-                }
-                catch {
-                    $false
-                }
-            })]
-        [string] $azsubscriptionid
+        [guid] $azsubscriptionid
     )
     try {
         #Check if Azure subscription exist
-        Get-AzSubscription -SubscriptionId $azsubscriptionid -ErrorAction Stop | Out-Null
+        Get-AzSubscription -SubscriptionId $azsubscriptionid | Out-Null
     }
     catch {
         Write-Error -Message $_
@@ -170,16 +161,7 @@ function Get-PimAzRoledefinitionId {
     #>
     param(
         [Parameter (Mandatory = $true)]
-        [ValidateScript( {
-                try {
-                    [System.Guid]::Parse($_) | Out-Null
-                    $true
-                }
-                catch {
-                    $false
-                }
-            })]
-        [string] $azsubscriptionid,
+        [guid] $azsubscriptionid,
         [Parameter(Mandatory = $true)]
         [string] $azroledefinitionid
     )
@@ -221,16 +203,7 @@ function Get-PimAzRoleSettingId {
     #>
     param(
         [Parameter (Mandatory = $true)]
-        [ValidateScript( {
-                try {
-                    [System.Guid]::Parse($_) | Out-Null
-                    $true
-                }
-                catch {
-                    $false
-                }
-            })]
-        [string] $azsubscriptionid,
+        [guid] $azsubscriptionid,
         [Parameter(Mandatory = $true)]
         [string] $azroledefinitionid
     )
@@ -263,16 +236,7 @@ function New-PimAzSubscriptionEnrollment {
     #>
     param(
         [Parameter (Mandatory = $true)]
-        [ValidateScript( {
-                try {
-                    [System.Guid]::Parse($_) | Out-Null
-                    $true
-                }
-                catch {
-                    $false
-                }
-            })]
-        [string] $azsubscriptionid
+        [guid] $azsubscriptionid
     )
     try {
         #Check if Azure subscription exist
@@ -325,16 +289,7 @@ function Set-PimAzSubscriptionRoleSetting {
     #>
     param(
         [Parameter (Mandatory = $true)]
-        [ValidateScript( {
-                try {
-                    [System.Guid]::Parse($_) | Out-Null
-                    $true
-                }
-                catch {
-                    $false
-                }
-            })]
-        [string] $azsubscriptionid,
+        [guid] $azsubscriptionid,
         [Parameter(Mandatory = $true)]
         [array] $azroledefids,
         [Parameter(Mandatory = $true)]
@@ -454,16 +409,7 @@ function New-PimAzRoleAssignment {
     #>
     param(
         [Parameter (Mandatory = $true)]
-        [ValidateScript( {
-                try {
-                    [System.Guid]::Parse($_) | Out-Null
-                    $true
-                }
-                catch {
-                    $false
-                }
-            })]
-        [string] $azsubscriptionid,
+        [guid] $azsubscriptionid,
         [Parameter(Mandatory = $true)]
         [array] $azroledefids,
         [Parameter(Mandatory = $true)]
