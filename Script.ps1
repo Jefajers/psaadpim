@@ -131,7 +131,7 @@ $LightProfile = @(
 try {
     #Connecting to Azure
     Write-Output -InputObject "Connecting to required Azure resources"
-    Connect-PimAz -AzAutomationCredentailName pimsvc -IdentityType user -AzADTenant 33dab8ad-f425-45f0-95f5-d81ed07503e3
+    Connect-PimAz -AzAutomationCredentialName pimsvc -IdentityType user -AzADTenant 33dab8ad-f425-45f0-95f5-d81ed07503e3
 }
 catch {
     Write-Error -Message $_
