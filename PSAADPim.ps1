@@ -21,20 +21,20 @@ function Connect-PimAz {
     <#
     .SYNOPSIS
         Connect to required resources AzureAD and Azure
-    .PARAMETER AzAutomationCredentailName
+    .PARAMETER AzAutomationCredentialName
         The Azure Automation Credential name to be used
     .PARAMETER IdentityType
         Set service account type to be used by the function, either spn or user in the following format: [spn]/[user]
     .PARAMETER AzADTenant
         Set service account type to be used by the function, either spn or user in the following format: [spn]/[user]
     .EXAMPLE
-        Connect-PimAz -AzAutomationCredentailName nameofcredential -IdentityType spn -AzADTenant xxxx-xxxx-xxxx-xxxx
+        Connect-PimAz -AzAutomationCredentialName nameofcredential -IdentityType spn -AzADTenant xxxx-xxxx-xxxx-xxxx
     .OUTPUTS
         N/A
     #>
     param(
         [Parameter(Mandatory = $true)]
-        [string] $AzAutomationCredentailName,
+        [string] $AzAutomationCredentialName,
         [Parameter(Mandatory = $true)]
         [string] $IdentityType,
         [Parameter(Mandatory = $true)]
@@ -42,7 +42,7 @@ function Connect-PimAz {
     )
     try {
         #Gather service account credential
-        $AzureAdPimCred = Get-AutomationPSCredential -Name $AzAutomationCredentailName -ErrorAction Stop
+        $AzureAdPimCred = Get-AutomationPSCredential -Name $AzAutomationCredentialName -ErrorAction Stop
         $AzureAdPimCredUserName = $AzureAdPimCred.Username
     }
     catch {
