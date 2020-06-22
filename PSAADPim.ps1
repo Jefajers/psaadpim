@@ -42,7 +42,7 @@ function Connect-PimAz {
     )
     try {
         #Gather service account credential
-        $AzureAdPimCred = Get-AutomationPSCredential -Name $AzAutomationCredentialName -ErrorAction Stop
+        $AzureAdPimCred = Get-AutomationPSCredential -Name $AzAutomationCredentialName
         $AzureAdPimCredUserName = $AzureAdPimCred.Username
     }
     catch {
@@ -75,7 +75,7 @@ function Connect-PimAz {
             Connect-AzureAD -TenantId $AzADTenant -AadAccessToken $Token.access_token -AccountId 'SPNConnection'
         }
         else {
-            Connect-AzureAD -TenantId $AzADTenant -Credential $AzureAdPimCred -ErrorAction Stop
+            Connect-AzureAD -TenantId $AzADTenant -Credential $AzureAdPimCred
         }
     }
     catch {
@@ -88,10 +88,10 @@ function Connect-PimAz {
     try {
         #Connect to Azure
         if ($IdentityType -eq 'spn') {
-            Connect-AzAccount -ServicePrincipal -Credential $AzureAdPimCred -Tenant $AzADTenant -ErrorAction Stop
+            Connect-AzAccount -ServicePrincipal -Credential $AzureAdPimCred -Tenant $AzADTenant
         }
         else {
-            Connect-AzAccount -Tenant $AzADTenant -Credential $AzureAdPimCred -ErrorAction Stop
+            Connect-AzAccount -Tenant $AzADTenant -Credential $AzureAdPimCred
         }
     }
     catch {

@@ -50,28 +50,13 @@
 Param
 (
     [Parameter (Mandatory = $true)]
-    [ValidateScript( {
-            try {
-                [System.Guid]::Parse($_) | Out-Null
-                $true
-            }
-            catch {
-                $false
-            }
-        })]
-    [string] $azsubscriptionid,
+    [guid] $azsubscriptionid,
     [Parameter (Mandatory = $true)]
-    [ValidateScript({
-        $_ | ConvertFrom-Json
-    })]
     [array] $azroledefids,
     [Parameter (Mandatory = $true)]
     [ValidateSet("mediumprofile", "lightprofile")]
     [string] $roleprofile,
     [Parameter (Mandatory = $true)]
-    [ValidateScript({
-        $_ | ConvertFrom-Json
-    })]
     [array] $aadgroups,
     [Parameter (Mandatory = $false)]
     [switch] $onlyaddaadgroups,
@@ -81,10 +66,8 @@ Param
 )
 #Error Action Preference
 $ErrorActionPreference = "Stop"
-##################
-#Function section#
-##################
 
+. .\PSAADPim-Runbook.ps1
 <#
 #################
 #Profile section#
