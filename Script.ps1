@@ -1,15 +1,9 @@
-#AzureADPIMFunctionLibrary.ps1
 <#
 .SYNOPSIS
     PowerShell library with supporting functions to enable:
     *Azure Subscription enrollment into Azure AD PIM
     *Set Azure PIM Role Settings according to function baseline
     *Add Azure AD Groups as members of roles controlled by Azure AD PIM
-    Function Library has dependcys towads the following PowerShell modules and is intended to be run as a PowerShell Runbook in Azure Automation:
-    *AzureADPreview
-    *Az.Accounts
-    *Az.Automation
-    *Az.Resources
 .PARAMETER azsubscriptionid
     The Azure subscription id in the following format (GUID): xxxx-xxxx-xxxx-xxxx
     Can be collected by running Get-AzSubscription and look for the ID matching the subscription that matches desired scope
@@ -46,6 +40,10 @@
 .OUTPUTS
     N/A
 #>
+#requires -modules AzureADPreview
+#requires -modules Az.Accounts
+#requires -modules Az.Automation
+#requires -modules Az.Resources
 
 #Parameters
 [CmdletBinding(SupportsShouldProcess = $true)]
