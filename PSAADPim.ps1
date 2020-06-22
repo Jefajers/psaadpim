@@ -46,7 +46,6 @@ function Connect-PimAz {
         $AzureAdPimCred = Get-AutomationPSCredential -Name $AzAutomationCredentialName
         $AzureAdPimCredUserName = $AzureAdPimCred.Username
         $AzADTenant = Get-AutomationVariable -Name $AzADTenant
-        $AzADTenant = $AzADTenant.value
     }
     catch {
         $ErrorMessage = $_.Exception.Message
