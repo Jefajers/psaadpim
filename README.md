@@ -28,7 +28,7 @@ Main target scenarios for this PowerShell function library and supporting wrappe
     1. Copy the content from Script.ps1 and paste into this runbook
     1. Save & Publish
 #### Trigger a job with Az.Automation
-- In PowerShell create the following objects (remember to add your aad group id, azrole id, rg name and automation account name):
+- In PowerShell create the following objects as input parameters for the runbook job (remember to add your aad group id, azrole id, rg name and automation account name):
     - `$AADGROUPS  = @(
                 @{ ObjectId="<InsertAADGroupID>"}
         )`
@@ -38,7 +38,8 @@ Main target scenarios for this PowerShell function library and supporting wrappe
     - `$AADGROUPS = ConvertTo-Json -InputObject $AADGROUPS`
     - `$AZROLEDEFIDS = ConvertTo-Json -InputObject $AZROLEDEFIDS`
     - `$params = @{"AZSUBSCRIPTIONID"="<EnterAzSubId>";"AADGROUPS"="$AADGROUPS";"ROLEPROFILE"="LightProfile";"AZROLEDEFIDS"="$AZROLEDEFIDS";"ASSIGNMENTTYPE"="Eligible"}`
-- `Start-AzAutomationRunbook -Name Script -ResourceGroupName <InsertRGName> -AutomationAccountName <InsertAAName> -Parameters $params`
+- Submit the job to the Azure Automation Runbook
+    - `Start-AzAutomationRunbook -Name Script -ResourceGroupName <InsertRGName> -AutomationAccountName <InsertAAName> -Parameters $params`
 ##### The syntax?
 - Discover more about the syntax of the Script.ps1 wrapper by examining the synopsis in that file
 - Discover more about the syntax of the PSAADPim.ps1 functions by examining the synopsis in that file but start with the Script.ps1 file
