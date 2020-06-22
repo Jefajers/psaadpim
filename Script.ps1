@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-    PowerShell library with supporting functions to enable:
-    *Azure Subscription enrollment into Azure AD PIM
-    *Set Azure PIM Role Settings according to function baseline
-    *Add Azure AD Groups as members of roles controlled by Azure AD PIM
+    PowerShell function library with supporting wrapper script to enable:
+    *Azure Subscription enrolment into Azure AD PIM
+    *Set Azure AD PIM Role Settings for Azure resources according to function baseline
+    *Add Azure AD Groups as members of Azure roles controlled by Azure AD PIM
 .PARAMETER azsubscriptionid
     The Azure subscription id in the following format (GUID): xxxx-xxxx-xxxx-xxxx
     Can be collected by running Get-AzSubscription and look for the ID matching the subscription that matches desired scope
