@@ -36,7 +36,7 @@
     Start-AzAutomationRunbook -Name yourrunbookname -AutomationAccountName yourautomationaccountname -ResourceGroupName yourautomationaccountrgname  -Parameters $params
 
     Script syntax
-    .\AzureADPIMFunctionLibraryv1.ps1 -azsubscriptionid xxxx-xxxx-xxxx-xxxx -azroledefids [{"Id":"xxxx-xxxx-xxxx-xxxx"},{"Id":"xxxx-xxxx-xxxx-xxxx"}] -roleprofile mediumprofile -aadgroups [{"ObjectId":"xxxx-xxxx-xxxx-xxxx"},{"ObjectId":"xxxx-xxxx-xxxx-xxxx"}] -assignmenttype Eligible
+    .\Script.ps1 -azsubscriptionid xxxx-xxxx-xxxx-xxxx -azroledefids [{"Id":"xxxx-xxxx-xxxx-xxxx"},{"Id":"xxxx-xxxx-xxxx-xxxx"}] -roleprofile mediumprofile -aadgroups [{"ObjectId":"xxxx-xxxx-xxxx-xxxx"},{"ObjectId":"xxxx-xxxx-xxxx-xxxx"}] -assignmenttype Eligible
 .OUTPUTS
     N/A
 #>
@@ -67,7 +67,7 @@ Param
 #Error Action Preference
 $ErrorActionPreference = "Stop"
 
-. .\PSAADPim-Runbook.ps1
+. .\PSAADPim.ps1
 <#
 #################
 #Profile section#
@@ -116,9 +116,9 @@ $LightProfile = @(
 #Connection section#
 ####################
 try {
-    #Connecting to Azure
+    #Connecting to Azure (at the time of writing backend supports User Accounts only)
     Write-Output -InputObject "Connecting to required Azure resources"
-    Connect-PimAz -AzAutomationCredentialName pimsvc -IdentityType user -AzADTenant 33dab8ad-f425-45f0-95f5-d81ed07503e3
+    Connect-PimAz -AzAutomationCredentialName pimsvc -IdentityType user -AzADTenant pimtenantid
 }
 catch {
     Write-Error -Message $_
