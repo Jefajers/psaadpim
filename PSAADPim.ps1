@@ -258,6 +258,15 @@ function Get-PimAzSubscriptionEnrolment {
     }
 }
 function Register-PimAzSubscription {
+    <#
+    .SYNOPSIS
+        Performs important API call to ensure PIM resource discovery in Portal
+    .PARAMETER azsubscriptionid
+        The Azure subscription id to be used as scope in the following format: xxxx-xxxx-xxxx-xxxx
+    .EXAMPLE
+        Register-PimAzSubscription -azsubscriptionid xxxx-xxxx-xxxx-xxxx
+    .OUTPUTS
+    #>
     param (
         [Parameter(Mandatory = $true)]
         [guid]$azsubscriptionid
@@ -279,8 +288,12 @@ function Register-PimAzSubscription {
         Invoke-RestMethod -Uri $Uri -Method POST -Headers $authHeader -Body ($Body | ConvertTo-Json)
     }
     catch {
-        Write-Error -Message $_
-        break
+        if ($_ -like "*The Role assignment already exists*") {
+            Write-Output -InputObject "MS-PIM role assignment already exists"
+        } else {
+            Write-Error -Message $_
+            break
+        }
     }
 }
 function New-PimAzSubscriptionEnrolment {
@@ -316,22 +329,22 @@ function New-PimAzSubscriptionEnrolment {
     }
     #No try catch in this section to avoid false positive with underlying module
     if ($subenrollmentcheck) {
-        Write-Output -InputObject "Azure subscription $azsubscriptionid is already enrolled in Azure AD PIM"
+        Write-Output -InputObject "Azure subscription $azsubscriptionid is already enroled in Azure AD PIM"
     }
     else {
         #Enroll subscription to Azure AD PIM
-        Write-Output -InputObject "Enrolling Azure subscription $azsubscriptionid into Azure AD PIM"
+        Write-Output -InputObject "Enroling Azure subscription $azsubscriptionid into Azure AD PIM"
         $subExternalId = "/subscriptions/$azsubscriptionid"
-        Add-AzureADMSPrivilegedResource -ProviderId AzureResources -ExternalId $subExternalId -ErrorAction SilentlyContinue
+        Add-AzureADMSPrivilegedResource -ProviderId AzureResources -ExternalId $subExternalId
         Register-PimAzSubscription -azsubscriptionid $azsubscriptionid
+        Start-Sleep -Seconds 10
         try {
-            #Check if Azure subscription is now enrolled
-            Sleep -Seconds 10
+            #Check if Azure subscription is now enroled
             $subenrollmentcheck = Get-PimAzSubscriptionEnrolment $azsubscriptionid
             if ($subenrollmentcheck) {
-                Write-Output -InputObject "Azure subscription $azsubscriptionid is now enrolled in Azure AD PIM"
+                Write-Output -InputObject "Azure subscription $azsubscriptionid is now enroled in Azure AD PIM"
             } else {
-                Write-Output -InputObject "Azure subscription $azsubscriptionid is not enrolled in Azure AD PIM, please investigate"
+                Write-Output -InputObject "Azure subscription $azsubscriptionid is not enroled in Azure AD PIM, please investigate"
                 break
             }
         }
@@ -359,7 +372,7 @@ function Set-PimAzSubscriptionRoleSetting {
     #>
     param(
         [Parameter (Mandatory = $true)]
-        # [guid] $azsubscriptionid,
+        [guid] $azsubscriptionid,
         [Parameter(Mandatory = $true)]
         [array] $azroledefids,
         [Parameter(Mandatory = $true)]

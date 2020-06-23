@@ -65,7 +65,7 @@ Param
     [string] $assignmenttype
 )
 #Error Action Preference
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 #Import functions
 . .\PSAADPim.ps1
 <#
