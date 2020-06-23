@@ -19,7 +19,7 @@ Main target scenarios for this PowerShell function library and supporting wrappe
     1. Az.Accounts
     1. Az.Automation
     1. Az.Resources
-1. Add a Azure Automation Variable with name "pimtenantid", as value enter your TenantID
+1. Add a Azure Automation Variable with name "pimtenantid" and type "string", as value enter your TenantID
 1. Create a Azure Automation Credential with name "pimsvc", as user name enter the service account you have created for this service serviceaccountname@yourtenantname.onmicrosoft.com with your secret password as the password
 1. Create a runbook called "PSAADPIM" with runbook type "PowerShell"
     1. Copy the content from PSAADPim.ps1 and paste into this runbook
