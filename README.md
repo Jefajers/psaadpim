@@ -9,7 +9,7 @@ Main target scenarios for this PowerShell function library and supporting wrappe
 - Azure AD PIM license
 - Azure subscription to host the back-end service
 - Azure resource group
-- Service account (Azure AD User Account) with the following permission:
+- Dedicated service account (Azure AD User Account) to perform the highly privliged PIM actions required with the following permission:
     - Assigned Azure AD Role "Privileged Role administrators"
     - Azure Role "User Access Administrator" assigned on applicable Azure scope depening on your management group structure
 ### Getting Started
