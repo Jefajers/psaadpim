@@ -225,6 +225,32 @@ function Get-PimAzRoleSettingId {
         break
     }
 }
+function Register-PimAzSubscription {
+    param (
+        [Parameter(Mandatory = $true)]
+        [guid]$azsubscriptionid
+    )
+    #Get token from current Az Context
+    $currentAzureContext = Get-AzContext
+    $azureRmProfile = [Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureRmProfileProvider]::Instance.Profile;
+    $profileClient = New-Object Microsoft.Azure.Commands.ResourceManager.Common.RMProfileClient($azureRmProfile);
+    $token = $profileClient.AcquireAccessToken($currentAzureContext.Subscription.TenantId).AccessToken;
+    $authHeader = @{
+        'Content-Type'  = 'application/json'
+        'Authorization' = 'Bearer ' + $token
+    }
+    try {
+        #Construct API call body
+        $Body = @{externalId = "/subscriptions/$azsubscriptionid" }
+        #Call API to register subscription
+        $Uri = "https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/resources/register"
+        Invoke-RestMethod -Uri $Uri -Method POST -Headers $authHeader -Body ($Body | ConvertTo-Json)
+    }
+    catch {
+        Write-Error -Message $_
+        break
+    }
+}
 function New-PimAzSubscriptionEnrollment {
     <#
     .SYNOPSIS
@@ -250,7 +276,7 @@ function New-PimAzSubscriptionEnrollment {
     }
     try {
         #Check if Azure subscription is already enrolled
-        $subenrollmentcheck = Get-AzRoleAssignment -Scope /subscriptions/$azsubscriptionid | Where-Object {$_.DisplayName -eq 'MS-PIM'}
+        $subenrollmentcheck = Get-AzRoleAssignment -Scope /subscriptions/$azsubscriptionid | Where-Object { $_.DisplayName -eq 'MS-PIM' }
     }
     catch {
         Write-Error -Message $_
@@ -265,6 +291,7 @@ function New-PimAzSubscriptionEnrollment {
             Write-Output -InputObject "Enrolling Azure subscription $azsubscriptionid into Azure AD PIM"
             $subExternalId = "/subscriptions/$azsubscriptionid"
             Add-AzureADMSPrivilegedResource -ProviderId AzureResources -ExternalId $subExternalId
+            Register-PimAzSubscription -azsubscriptionid $azsubscriptionid
         }
     }
     catch {
@@ -291,7 +318,7 @@ function Set-PimAzSubscriptionRoleSetting {
     #>
     param(
         [Parameter (Mandatory = $true)]
-        [guid] $azsubscriptionid,
+        # [guid] $azsubscriptionid,
         [Parameter(Mandatory = $true)]
         [array] $azroledefids,
         [Parameter(Mandatory = $true)]
