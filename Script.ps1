@@ -152,9 +152,9 @@ catch {
     break
 }
 try {
-    #Enroll subscription for Azure AD PIM
+    #Enrol subscription for Azure AD PIM
     Write-Output -InputObject "Enrolling Azure subscription $azsubscriptionid"
-    New-PimAzSubscriptionEnrollment -azsubscriptionid $azsubscriptionid
+    New-PimAzSubscriptionEnrolment -azsubscriptionid $azsubscriptionid
 }
 catch {
     Write-Error -Message $_
