@@ -17,7 +17,9 @@ Main target scenarios for this PowerShell function library and supporting wrappe
     1. Az.Automation
     1. Az.Resources
     1. AzureADPreview
-1. Update the newly created Azure Automation Credential with name "pimsvc", as user name enter the service account you have created for this service serviceaccountname@yourtenantname.onmicrosoft.com with your secret password as the password
+1. Update the newly created Azure Automation Credential with name "pimsvc"
+    1. As user name enter the service account upn you have created for this service serviceaccountname@yourtenantname.onmicrosoft.com
+    1. As password enter your secret password as the password
 #### Trigger a job with Az.Automation
 - In PowerShell create the following objects as input parameters for the runbook job (remember to add your aad group id, azrole id, rg name and automation account name):
     - `$AADGROUPS  = @(
