@@ -13,10 +13,10 @@ Main target scenarios for this PowerShell function library and supporting wrappe
 ### Getting Started
 1. [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://ms.portal.azure.com/?feature.customportal=false#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FJefajers%2Fpsaadpim%2Fmaster%2Farm%2Fdeploy.json)
 1. Add the following modules into the Azure Automation Account
-    1. AzureADPreview
     1. Az.Accounts
     1. Az.Automation
     1. Az.Resources
+    1. AzureADPreview
 1. Update the newly created Azure Automation Credential with name "pimsvc", as user name enter the service account you have created for this service serviceaccountname@yourtenantname.onmicrosoft.com with your secret password as the password
 #### Trigger a job with Az.Automation
 - In PowerShell create the following objects as input parameters for the runbook job (remember to add your aad group id, azrole id, rg name and automation account name):
@@ -30,7 +30,7 @@ Main target scenarios for this PowerShell function library and supporting wrappe
     - `$AZROLEDEFIDS = ConvertTo-Json -InputObject $AZROLEDEFIDS`
     - `$params = @{"AZSUBSCRIPTIONID"="<EnterAzSubId>";"AADGROUPS"="$AADGROUPS";"ROLEPROFILE"="LightProfile";"AZROLEDEFIDS"="$AZROLEDEFIDS";"ASSIGNMENTTYPE"="Eligible"}`
 - Submit the job to the Azure Automation Runbook
-    - `Start-AzAutomationRunbook -Name Script -ResourceGroupName <InsertRGName> -AutomationAccountName <InsertAAName> -Parameters $params`
+    - `Start-AzAutomationRunbook -Name Script -ResourceGroupName <InsertRGName> -AutomationAccountName psaadpim-aa -Parameters $params`
 ##### The syntax?
 - Discover more about the syntax of the Script.ps1 wrapper by examining the synopsis in that file
 - Discover more about the syntax of the PSAADPim.ps1 functions by examining the synopsis in that file but start with the Script.ps1 file
