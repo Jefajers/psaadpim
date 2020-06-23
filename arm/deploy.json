@@ -24,7 +24,7 @@
 			}
 		},
 		"pimsvccredential": {
-			"type": "string",
+			"type": "securestring",
 			"defaultValue": "dummyvalue",
 			"metadata": {
 				"description": "service account password"
