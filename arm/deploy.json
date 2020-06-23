@@ -1,5 +1,5 @@
 {
-	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
 	"contentVersion": "1.0.0.0",
 	"parameters": {
 		"automationAccountName": {
@@ -18,45 +18,45 @@
 		},
 		"pimsvcusername": {
 			"type": "string",
-			"defaultvalue": "fakeusername@yourtenant.onmicrosoft.com",
+			"defaultValue": "fakeusername@yourtenant.onmicrosoft.com",
 			"metadata": {
 				"description": "service account user name"
 			}
 		},
 		"pimsvccredential": {
 			"type": "string",
-			"defaultvalue": "dummyvalue",
+			"defaultValue": "dummyvalue",
 			"metadata": {
 				"description": "service account password"
 			}
 		},
 		"pimsvcdescription": {
 			"type": "string",
-			"defaultvalue": "pimsvc service account credential used by PSAADPim runbook"
+			"defaultValue": "pimsvc service account credential used by PSAADPim runbook"
 		},
 		"ScriptPowerShellRunbookName": {
 			"type": "string",
-			"defaultvalue": "Script"
+			"defaultValue": "Script"
 		},
 		"ScriptPowerShellRunbookDescription": {
 			"type": "string",
-			"defaultvalue": "Runbook wrapper for PSAADPim"
+			"defaultValue": "Runbook wrapper for PSAADPim"
 		},
 		"ScriptPowerShellRunbookContentUri": {
 			"type": "string",
-			"defaultvalue": "https://raw.githubusercontent.com/Jefajers/psaadpim/master/Script.ps1"
+			"defaultValue": "https://raw.githubusercontent.com/Jefajers/psaadpim/master/Script.ps1"
 		},
 		"PSAADPimPowerShellRunbookName": {
 			"type": "string",
-			"defaultvalue": "PSAADPim"
+			"defaultValue": "PSAADPim"
 		},
 		"PSAADPimPowerShellRunbookDescription": {
 			"type": "string",
-			"defaultvalue": "PSAADPim function library, used by Script runbook"
+			"defaultValue": "PSAADPim function library, used by Script runbook"
 		},
 		"PSAADPimPowerShellRunbookContentUri": {
 			"type": "string",
-			"defaultvalue": "https://raw.githubusercontent.com/Jefajers/psaadpim/master/PSAADPim.ps1"
+			"defaultValue": "https://raw.githubusercontent.com/Jefajers/psaadpim/master/PSAADPim.ps1"
 		}
 	},
 	"resources": [{
