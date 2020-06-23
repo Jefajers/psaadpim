@@ -9,24 +9,15 @@ Main target scenarios for this PowerShell function library and supporting wrappe
 - Azure AD PIM license
 - Azure subscription to host the back-end service
 - Azure resource group
-- Azure Automation Account
 - Service account (Azure AD User Account) with "User Access Administrator" role assigned on applicable Azure scope depening on your management group structure
-- Gather your TenantID
-
 ### Getting Started
+1. |[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://ms.portal.azure.com/?feature.customportal=false#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FJefajers%2Fpsaadpim%2Fmaster%2arm%2Fdeploy.json) |
 1. Add the following modules into the Azure Automation Account
     1. AzureADPreview
     1. Az.Accounts
     1. Az.Automation
     1. Az.Resources
-1. Add a Azure Automation Variable with name "pimtenantid" and type "string", as value enter your TenantID
-1. Create a Azure Automation Credential with name "pimsvc", as user name enter the service account you have created for this service serviceaccountname@yourtenantname.onmicrosoft.com with your secret password as the password
-1. Create a runbook called "PSAADPIM" with runbook type "PowerShell"
-    1. Copy the content from PSAADPim.ps1 and paste into this runbook
-    1. Save & Publish
-1. Create a runbook called "Script" with runbook type "PowerShell"
-    1. Copy the content from Script.ps1 and paste into this runbook
-    1. Save & Publish
+1. Update the newly created Azure Automation Credential with name "pimsvc", as user name enter the service account you have created for this service serviceaccountname@yourtenantname.onmicrosoft.com with your secret password as the password
 #### Trigger a job with Az.Automation
 - In PowerShell create the following objects as input parameters for the runbook job (remember to add your aad group id, azrole id, rg name and automation account name):
     - `$AADGROUPS  = @(

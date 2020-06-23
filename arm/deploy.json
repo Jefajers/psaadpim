@@ -1,0 +1,141 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"automationAccountName": {
+			"type": "string",
+			"defaultValue": "psaadpim-aa",
+			"metadata": {
+				"description": "Automation account name"
+			}
+		},
+		"automationAccountLocation": {
+			"type": "string",
+			"defaultValue": "[resourceGroup().location]",
+			"metadata": {
+				"description": "Specify the location in which to create the Automation account."
+			}
+		},
+		"pimsvcusername": {
+			"type": "string",
+			"defaultvalue": "fakeusername@yourtenant.onmicrosoft.com",
+			"metadata": {
+				"description": "service account user name"
+			}
+		},
+		"pimsvccredential": {
+			"type": "string",
+			"defaultvalue": "dummyvalue",
+			"metadata": {
+				"description": "service account password"
+			}
+		},
+		"pimsvcdescription": {
+			"type": "string",
+			"defaultvalue": "pimsvc service account credential used by PSAADPim runbook"
+		},
+		"ScriptPowerShellRunbookName": {
+			"type": "string",
+			"defaultvalue": "Script"
+		},
+		"ScriptPowerShellRunbookDescription": {
+			"type": "string",
+			"defaultvalue": "Runbook wrapper for PSAADPim"
+		},
+		"ScriptPowerShellRunbookContentUri": {
+			"type": "string",
+			"defaultvalue": "https://raw.githubusercontent.com/Jefajers/psaadpim/master/Script.ps1"
+		},
+		"PSAADPimPowerShellRunbookName": {
+			"type": "string",
+			"defaultvalue": "PSAADPim"
+		},
+		"PSAADPimPowerShellRunbookDescription": {
+			"type": "string",
+			"defaultvalue": "PSAADPim function library, used by Script runbook"
+		},
+		"PSAADPimPowerShellRunbookContentUri": {
+			"type": "string",
+			"defaultvalue": "https://raw.githubusercontent.com/Jefajers/psaadpim/master/PSAADPim.ps1"
+		}
+	},
+	"resources": [{
+		"type": "Microsoft.Automation/automationAccounts",
+		"apiVersion": "2015-10-31",
+		"name": "[parameters('automationAccountName')]",
+		"location": "[parameters('automationAccountLocation')]",
+		"tags": {},
+		"properties": {
+			"sku": {
+				"name": "Basic"
+			}
+		},
+		"resources": [{
+				"name": "pimtenantid",
+				"type": "variables",
+				"apiVersion": "2015-10-31",
+				"dependsOn": [
+					"[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+				],
+				"properties": {
+					"value": "[concat('\"', subscription().tenantId, '\"')]",
+					"description": "TenantId used by PSAADPim runbook",
+					"isEncrypted": false
+				}
+			},
+			{
+				"name": "pimsvc",
+				"type": "credentials",
+				"apiVersion": "2015-10-31",
+				"dependsOn": [
+					"[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+				],
+				"properties": {
+					"userName": "[parameters('pimsvcusername')]",
+					"password": "[parameters('pimsvccredential')]",
+					"description": "[parameters('pimsvcdescription')]"
+				}
+			},
+			{
+				"type": "runbooks",
+				"apiVersion": "2015-10-31",
+				"name": "[parameters('ScriptPowerShellRunbookName')]",
+				"location": "[parameters('automationAccountLocation')]",
+				"dependsOn": [
+					"[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+				],
+				"tags": {},
+				"properties": {
+					"runbookType": "PowerShell",
+					"logProgress": false,
+					"logVerbose": false,
+					"description": "[parameters('ScriptPowerShellRunbookDescription')]",
+					"publishContentLink": {
+						"uri": "[parameters('ScriptPowerShellRunbookContentUri')]",
+						"version": "1.0.0.0"
+					}
+				}
+			},
+			{
+				"type": "runbooks",
+				"apiVersion": "2015-10-31",
+				"name": "[parameters('PSAADPimPowerShellRunbookName')]",
+				"location": "[parameters('automationAccountLocation')]",
+				"dependsOn": [
+					"[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+				],
+				"tags": {},
+				"properties": {
+					"runbookType": "PowerShell",
+					"logProgress": false,
+					"logVerbose": false,
+					"description": "[parameters('PSAADPimPowerShellRunbookDescription')]",
+					"publishContentLink": {
+						"uri": "[parameters('PSAADPimPowerShellRunbookContentUri')]",
+						"version": "1.0.0.0"
+					}
+				}
+			}
+		]
+	}]
+}

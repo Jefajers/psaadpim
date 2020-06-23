@@ -1,0 +1,39 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"automationAccountName": {
+			"value": "psaadpim-aa"
+		},
+		"pimsvcusername": {
+			"value": "fakeusername@yourtenant.onmicrosoft.com",
+			"metadata": {
+				"description": "service account user name"
+			}
+		},
+		"pimsvccredential": {
+			"value": "dummyvalue"
+		},
+		"pimsvcdescription": {
+			"value": "pimsvc service account credential used by PSAADPim runbook"
+		},
+		"ScriptPowerShellRunbookName": {
+			"value": "Script"
+		},
+		"ScriptPowerShellRunbookDescription": {
+			"value": "Runbook wrapper for PSAADPim"
+		},
+		"ScriptPowerShellRunbookContentUri": {
+			"value": "https://raw.githubusercontent.com/Jefajers/psaadpim/master/Script.ps1"
+		},
+		"PSAADPimPowerShellRunbookName": {
+			"value": "PSAADPim"
+		},
+		"PSAADPimPowerShellRunbookDescription": {
+			"value": "PSAADPim function library, used by Script runbook"
+		},
+		"PSAADPimPowerShellRunbookContentUri": {
+			"value": "https://raw.githubusercontent.com/Jefajers/psaadpim/master/PSAADPim.ps1"
+		}
+	}
+}
