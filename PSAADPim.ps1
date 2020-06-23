@@ -250,7 +250,7 @@ function New-PimAzSubscriptionEnrollment {
     }
     try {
         #Check if Azure subscription is already enrolled
-        $subenrollmentcheck = Get-PimAzSubscriptionId -azsubscriptionid $azsubscriptionid
+        $subenrollmentcheck = Get-AzRoleAssignment -Scope /subscriptions/$azsubscriptionid | Where-Object {$_.DisplayName -eq 'MS-PIM'}
     }
     catch {
         Write-Error -Message $_
@@ -263,7 +263,7 @@ function New-PimAzSubscriptionEnrollment {
         else {
             #Enroll subscription to Azure AD PIM
             Write-Output -InputObject "Enrolling Azure subscription $azsubscriptionid into Azure AD PIM"
-            $subExternalId = "/subscriptions/" + "$azsubscriptionid"
+            $subExternalId = "/subscriptions/$azsubscriptionid"
             Add-AzureADMSPrivilegedResource -ProviderId AzureResources -ExternalId $subExternalId
         }
     }
