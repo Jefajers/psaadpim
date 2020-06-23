@@ -225,6 +225,38 @@ function Get-PimAzRoleSettingId {
         break
     }
 }
+function Get-PimAzSubscriptionEnrolment {
+    <#
+    .SYNOPSIS
+        Checks if the subscription is enroled
+    .PARAMETER azsubscriptionid
+        The Azure subscription id to be used as scope in the following format: xxxx-xxxx-xxxx-xxxx
+    .EXAMPLE
+        Get-PimAzSubscriptionEnrolment -azsubscriptionid xxxx-xxxx-xxxx-xxxx
+    .OUTPUTS
+    #>
+    param(
+        [Parameter (Mandatory = $true)]
+        [guid] $azsubscriptionid
+    )
+    try {
+        #Check if Azure subscription exist
+        Get-AzSubscription -SubscriptionId $azsubscriptionid | Out-Null
+    }
+    catch {
+        Write-Error -Message $_
+        break
+    }
+    try {
+        #Check if Azure subscription is already enroled
+        $subenrollmentcheck = Get-AzRoleAssignment -Scope /subscriptions/$azsubscriptionid | Where-Object { $_.DisplayName -eq 'MS-PIM' }
+        return $subenrollmentcheck
+    }
+    catch {
+        Write-Error -Message $_
+        break
+    }
+}
 function Register-PimAzSubscription {
     param (
         [Parameter(Mandatory = $true)]
@@ -251,10 +283,10 @@ function Register-PimAzSubscription {
         break
     }
 }
-function New-PimAzSubscriptionEnrollment {
+function New-PimAzSubscriptionEnrolment {
     <#
     .SYNOPSIS
-        Enrolls designated Azure subscription into Azure AD PIM management
+        Enrols designated Azure subscription into Azure AD PIM management
     .PARAMETER azsubscriptionid
         The Azure subscription id in the following format: xxxx-xxxx-xxxx-xxxx
     .EXAMPLE
@@ -275,29 +307,38 @@ function New-PimAzSubscriptionEnrollment {
         break
     }
     try {
-        #Check if Azure subscription is already enrolled
-        $subenrollmentcheck = Get-AzRoleAssignment -Scope /subscriptions/$azsubscriptionid | Where-Object { $_.DisplayName -eq 'MS-PIM' }
+        #Check if Azure subscription is already enroled
+        $subenrollmentcheck = Get-PimAzSubscriptionEnrolment $azsubscriptionid
     }
     catch {
         Write-Error -Message $_
         break
     }
-    try {
-        if ($subenrollmentcheck) {
-            Write-Output -InputObject "Azure subscription $azsubscriptionid is already enrolled in Azure AD PIM"
-        }
-        else {
-            #Enroll subscription to Azure AD PIM
-            Write-Output -InputObject "Enrolling Azure subscription $azsubscriptionid into Azure AD PIM"
-            $subExternalId = "/subscriptions/$azsubscriptionid"
-            Add-AzureADMSPrivilegedResource -ProviderId AzureResources -ExternalId $subExternalId
-            Register-PimAzSubscription -azsubscriptionid $azsubscriptionid
-        }
+    #No try catch in this section to avoid false positive with underlying module
+    if ($subenrollmentcheck) {
+        Write-Output -InputObject "Azure subscription $azsubscriptionid is already enrolled in Azure AD PIM"
     }
-    catch {
-        Write-Output -InputObject "Unable to enable PIM on $azsubscriptionid, $ErrorMessage"
-        Write-Error -Message $_
-        break
+    else {
+        #Enroll subscription to Azure AD PIM
+        Write-Output -InputObject "Enrolling Azure subscription $azsubscriptionid into Azure AD PIM"
+        $subExternalId = "/subscriptions/$azsubscriptionid"
+        Add-AzureADMSPrivilegedResource -ProviderId AzureResources -ExternalId $subExternalId -ErrorAction SilentlyContinue
+        Register-PimAzSubscription -azsubscriptionid $azsubscriptionid
+        try {
+            #Check if Azure subscription is now enrolled
+            Sleep -Seconds 10
+            $subenrollmentcheck = Get-PimAzSubscriptionEnrolment $azsubscriptionid
+            if ($subenrollmentcheck) {
+                Write-Output -InputObject "Azure subscription $azsubscriptionid is now enrolled in Azure AD PIM"
+            } else {
+                Write-Output -InputObject "Azure subscription $azsubscriptionid is not enrolled in Azure AD PIM, please investigate"
+                break
+            }
+        }
+        catch {
+            Write-Error -Message $_
+            break
+        }
     }
 }
 function Set-PimAzSubscriptionRoleSetting {
