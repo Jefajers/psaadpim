@@ -16,13 +16,13 @@ Main target scenarios for this PowerShell function library and supporting wrappe
     - SPN (modules assume SPN will authenticate with Secret not Certificate):
         - Assign Azure "Reader" role assigned on applicable Azure scope depening on your management group structure, recommendation: apply at root level.
         - Azure Active Directory Graph
-            - Directory.Read.All of Type:Application
+            - **Directory.Read.All** of Type:**Application**
         - Microsoft Graph
-            - Group.Read.All of Type:Delegated
-            - PrivilegedAccess.ReadWrite.AzureResources of Type:Delegated
-            - PrivilegedAccess.ReadWrite.AzureAD of Type:Delegated (optional future proofing)
-            - PrivilegedAccess.ReadWrite.AzureADGroup of Type:Delegated (optional future proofing)
-            - Directory.Read.All of Type: Delegated and Application (optional future proofing)
+            - **Group.Read.All** of Type: **Delegated**
+            - **PrivilegedAccess.ReadWrite.AzureResources** of Type: **Delegated**
+            - **PrivilegedAccess.ReadWrite.AzureAD** of Type: **Delegated** *(optional future proofing)*
+            - **PrivilegedAccess.ReadWrite.AzureADGroup** of Type: **Delegated** *(optional future proofing)*
+            - **Directory.Read.All** of Type: **Delegated** and **Application** *(optional future proofing)*
 ### Getting Started
 1. [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://ms.portal.azure.com/?feature.customportal=false#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FJefajers%2Fpsaadpim%2Fmaster%2Farm%2Fdeploy.json)
 1. Add the following modules into the Azure Automation Account
