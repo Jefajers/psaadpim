@@ -8,14 +8,26 @@
 		"pimsvcusername": {
 			"value": "fakeusername@yourtenant.onmicrosoft.com",
 			"metadata": {
-				"description": "service account user name"
+				"description": "user service account user name"
 			}
 		},
 		"pimsvccredential": {
 			"value": "dummyvalue"
 		},
 		"pimsvcdescription": {
-			"value": "pimsvc service account credential used by PSAADPim runbook"
+			"value": "pimusersvc user service account credential used by PSAADPim runbook"
+		},
+		"pimsvcspnclientid": {
+			"value": "xxxx-xxxx-xxxx-xxxx",
+			"metadata": {
+				"description": "spn service account user name"
+			}
+		},
+		"pimsvcspncredential": {
+			"value": "dummyvalue"
+		},
+		"pimsvcspndescription": {
+			"value": "pimspnsvc spn service account credential used by PSAADPim runbook"
 		},
 		"ScriptPowerShellRunbookName": {
 			"value": "Script"

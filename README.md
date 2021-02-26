@@ -9,19 +9,35 @@ Main target scenarios for this PowerShell function library and supporting wrappe
 - Azure AD PIM license
 - Azure subscription to host the back-end service
 - Azure resource group
-- Dedicated service account (Azure AD User Account) to perform the highly privliged PIM actions required with the following permission:
-    - Assigned Azure AD Role "Privileged Role administrators"
-    - Azure Role "User Access Administrator" assigned on applicable Azure scope depening on your management group structure
+- Dedicated service accounts (one Azure AD User Account and one SPN) to perform the highly privliged PIM actions. Enusre the identiies have the following permission:
+    - Azure AD User Account:
+        - Assign Azure AD Role "Privileged Role administrator"
+        - Assign Azure "User Access Administrator" role assigned on applicable Azure scope depening on your management group structure, recommendation: apply at root level.
+    - SPN (modules assume SPN will authenticate with Secret not Certificate):
+        - Assign Azure "Reader" role assigned on applicable Azure scope depening on your management group structure, recommendation: apply at root level.
+        - Azure Active Directory Graph
+            - Directory.Read.All of Type:Application
+        - Microsoft Graph
+            - Group.Read.All of Type:Delegated
+            - PrivilegedAccess.ReadWrite.AzureResources of Type:Delegated
+            - PrivilegedAccess.ReadWrite.AzureAD of Type:Delegated (optional future proofing)
+            - PrivilegedAccess.ReadWrite.AzureADGroup of Type:Delegated (optional future proofing)
+            - Directory.Read.All of Type: Delegated and Application (optional future proofing)
 ### Getting Started
 1. [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://ms.portal.azure.com/?feature.customportal=false#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FJefajers%2Fpsaadpim%2Fmaster%2Farm%2Fdeploy.json)
 1. Add the following modules into the Azure Automation Account
     1. Az.Accounts
     1. Az.Automation
     1. Az.Resources
-    1. AzureADPreview
-1. Update the newly created Azure Automation Credential with name "pimsvc"
-    1. As user name enter the service account upn you have created for this service serviceaccountname@yourtenantname.onmicrosoft.com
-    1. As password enter your secret password as the password
+    1. Microsoft.Graph.Authentication
+    1. Microsoft.Graph.Groups
+1. Update the newly created Azure Automation Credential objects
+    1. For credential: "pimusersvc"
+        1. As username enter the user service account upn you have created for this service serviceaccountname@yourtenantname.onmicrosoft.com
+        2. As password enter your secret password as the password
+    1. For credential: "pimspnsvc"
+        1. As username enter the spn service account client id you have created for this service xxxx-xxxx-xxxx-xxxx
+        1. As password enter your secret as the password
 #### Trigger a job with Az.Automation
 - In PowerShell create the following objects as input parameters for the runbook job (remember to add your aad group id, azrole id, rg name and automation account name):
     - `$AADGROUPS  = @(
