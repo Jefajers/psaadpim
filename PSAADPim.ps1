@@ -64,9 +64,10 @@ function Connect-PimAz {
         $authority = "https://login.microsoftonline.com/$AzADTenant"
         $tokenEndpointUri = "$authority/oauth2/token"
         $content = "grant_type=password&client_id=$client_id&client_secret=$client_secret&username=$AzureAdPimCredUserName&password=$($AzureAdPimCredUser.GetNetworkCredential().Password)&resource=$resource"
+        #Connect to login
         $response = Invoke-RestMethod -Uri $tokenEndpointUri -Body $content -Method Post -UseBasicParsing
         $accesstoken = $response.access_token
-       #Connect to the Graph
+        #Connect to the Graph
         Connect-MgGraph -AccessToken $accesstoken -TenantId $AzADTenant
     }
     catch {
@@ -124,8 +125,9 @@ function Get-PimAzSubscriptionId {
     try {
         #Get PIM resourceid of the az subscription
         $subidfilterstring = "ExternalId eq '/subscriptions/$azsubscriptionid'"
-        #Call API
+        #Construct API Uri
         $Uri = "https://graph.microsoft.com/beta/privilegedAccess/azureResources/resources?filter=$subidfilterstring"
+        #Call API
         $pimazsubid = Invoke-GraphRequest -Uri $Uri -Method GET
         if ($pimazsubid -eq $null) {
             Write-Error -Message "Azure subscription $azsubscriptionid is not found in PIM"
@@ -168,8 +170,9 @@ function Get-PimAzRoledefinitionId {
     try {
         #Get PIM resourceid of the az subscription
         $pimazsubid = Get-PimAzSubscriptionId -azsubscriptionid $azsubscriptionid
-        #Get role information with API call
+        #Construct API Uri to get role definition information
         $Uri = "https://graph.microsoft.com/beta/privilegedAccess/azureResources/resources/$($pimazsubid.value.id)/roleDefinitions?filter=templateId+eq+'$azroledefinitionid'"        
+        #Call API
         $pimazroleid = Invoke-GraphRequest -Uri $Uri -Method GET
         return $pimazroleid
     }
@@ -216,8 +219,9 @@ function Get-PimAzRoleSettingId {
         $pimazroleid = Get-PimAzRoledefinitionId -azsubscriptionid $azsubscriptionid -azroledefinitionid $azroledefinitionid
         #Construct rolesetting id filter
         $rolesettingidstring = "ResourceId eq '$($pimazsubid.value.id)' and RoleDefinitionId eq '$($pimazroleid.value.id)'"
-        #Get role setting information with API call
+        #Construct API Uri to get role setting information
         $Uri = "https://graph.microsoft.com/beta/privilegedAccess/azureResources/roleSettings?filter=$rolesettingidstring"
+        #Call API
         $pimazrolesettingid = Invoke-GraphRequest -Uri $Uri -Method GET
         return $pimazrolesettingid
     }
@@ -277,8 +281,9 @@ function Register-PimAzSubscription {
         $Body = @{    
             "externalId" = "/subscriptions/$azsubscriptionid"
         }
-        #Call API to register subscription
+        #Construct API Uri to register subscription
         $Uri = "https://graph.microsoft.com/beta/privilegedAccess/azureResources/resources/register"
+        #Call API
         Invoke-GraphRequest -Uri $uri -Method POST -Body ($Body | ConvertTo-Json)
     }
     catch {
@@ -406,8 +411,9 @@ function Set-PimAzSubscriptionRoleSetting {
             Write-Output -InputObject "Processing settings..."
                 $Body = $setting
                 try {
-                    #Set Role settings
+                    #Construct API Uri to set role settings
                     $Uri = "https://graph.microsoft.com/beta/privilegedAccess/azureResources/roleSettings/$($pimazrolesettingid.value.id)"
+                    #Call API
                     Invoke-GraphRequest -Uri $uri -Method PATCH -Body ($Body | ConvertTo-Json -Depth 100)
                 }
                 catch {
@@ -484,7 +490,9 @@ function New-PimAzRoleAssignment {
                 if ($assignmenttype -eq "Eligible") {
                     #Check if group already added
                     $groupstatefilterstring = "ResourceId eq '$($pimazsubid.value.id)' and RoleDefinitionId eq '$($pimazroleid.value.id)' and SubjectId eq '$($group.Id)'"
+                    #Construct API Uri
                     $Uri = "https://graph.microsoft.com/beta/privilegedAccess/azureResources/roleAssignments?filter=$groupstatefilterstring"
+                    #Call API
                     $groupstatecheck = Invoke-GraphRequest -Uri $uri -Method GET
                     if ($groupstatecheck.value.assignmentstate -eq "Eligible") {
                         Write-Output -InputObject "This group: $($group.Id) with this role: $($roleid.Id) already seem to have an $assignmenttype assignment, skipping add operation. Please check this group assignment manually"
@@ -514,7 +522,9 @@ function New-PimAzRoleAssignment {
                 if ($assignmenttype -eq "Active") {
                     #Check if group already added
                     $groupstatefilterstring = "ResourceId eq '$($pimazsubid.value.id)' and RoleDefinitionId eq '$($pimazroleid.value.id)' and SubjectId eq '$($group.Id)'"
+                    #Construct API Uri
                     $Uri = "https://graph.microsoft.com/beta/privilegedAccess/azureResources/roleAssignments?filter=$groupstatefilterstring"
+                    #Call API
                     $groupstatecheck = Invoke-GraphRequest -Uri $uri -Method GET
                     if ($groupstatecheck.value.assignmentstate -eq "Active") {
                         Write-Output -InputObject "This group: $($group.Id) with this role: $($roleid.Id) already seem to have an $assignmenttype assignment, skipping add operation. Please check this group assignment manually"
@@ -537,7 +547,9 @@ function New-PimAzRoleAssignment {
                                 "schedule" = @{ "startDateTime" = "$timenow"; "type" = "$scheduleType" }
                             }
                         )
+                        #Construct API Uri
                         $Uri = "https://graph.microsoft.com/beta/privilegedAccess/azureResources/roleAssignmentRequests"
+                        #Call API
                         Invoke-GraphRequest -Uri $uri -Method POST -Body ($Body | ConvertTo-Json -Depth 100)
                     }
                 }
