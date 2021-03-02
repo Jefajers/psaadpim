@@ -2,7 +2,7 @@
 function Get-PimTime {
     <#
     .SYNOPSIS
-        Gets current system time and provides it back as Pim expect
+        Get current system time and provide it back as AADPim expect
     .EXAMPLE
         Get-PimTime
     .OUTPUTS
@@ -28,7 +28,7 @@ function Connect-PimAz {
     .PARAMETER AzADTenant
         Azure AD Tenant ID: xxxx-xxxx-xxxx-xxxx
     .EXAMPLE
-        Connect-PimAz -AzAutomationCredentialUserName nameofcredential1 -AzAutomationCredentialSPNName nameofcredential2 -IdentityType spn -AzADTenant xxxx-xxxx-xxxx-xxxx
+        Connect-PimAz -AzAutomationCredentialUserName <ReplaceWithNameofAzureAdUserCredential> -AzAutomationCredentialSPNName <ReplaceWithNameofSPNCredential> -IdentityType spn -AzADTenant xxxx-xxxx-xxxx-xxxx
     .OUTPUTS
         N/A
     #>
@@ -95,11 +95,19 @@ function Get-PimAzSubscriptionId {
     .EXAMPLE
         Get-PimAzSubscriptionId -azsubscriptionid xxxx-xxxx-xxxx-xxxx
     .OUTPUTS
-        Id                  : xxxx-xxxx-xxxx-xxxx-xxxx
-        ExternalId          : /subscriptions/xxxx-xxxx-xxxx-xxxx-xxxx
-        Type                : subscription
-        DisplayName         : Displayname of subscription
-        Status              : Current status will be displayed here
+        $_.value:
+        Name                           Value
+        ----                           -----
+        originTenantId
+        id                             xxxx-xxxx-xxxx-xxxx-xxxx
+        displayName                    Displayname of subscription
+        managedAt
+        externalId                     /subscriptions/xxxx-xxxx-xxxx-xxxx-xxxx
+        registeredDateTime             xxxx
+        status                         Current status will be displayed here
+        onboardDateTime                xxxx
+        type                           subscription
+        registeredRoot
     #>
     param(
         [Parameter (Mandatory = $true)]
@@ -141,10 +149,15 @@ function Get-PimAzRoledefinitionId {
     .EXAMPLE
         Get-PimAzRoledefinitionId -azsubscriptionid xxxx-xxxx-xxxx-xxxx -azroledefinitionid xxxx-xxxx-xxxx-xxxx
     .OUTPUTS
-        Id                      : xxxx-xxxx-xxxx-xxxx
-        ResourceId              : xxxx-xxxx-xxxx-xxxx
-        ExternalId              : /subscriptions/xxxx-xxxx-xxxx-xxxx/providers/Microsoft.Authorization/roleDefinitions/xxxx-xxxx-xxxx-xxxx
-        DisplayName             : NameOfRole
+        $_.value:
+        Name                           Value
+        ----                           -----
+        resourceId                     xxxx-xxxx-xxxx-xxxx
+        type                           BuiltInRole or Custom
+        externalId                     /subscriptions/xxxx-xxxx-xxxx-xxxx/providers/Microsoft.Authorization/roleDefinitions/xxxx-xxxx-xxxx-xxxx
+        displayName                    Displayname of role
+        id                             xxxx-xxxx-xxxx-xxxx
+        templateId                     xxxx-xxxx-xxxx-xxxx
     #>
     param(
         [Parameter (Mandatory = $true)]
@@ -176,16 +189,19 @@ function Get-PimAzRoleSettingId {
     .EXAMPLE
         Get-PimAzRoleSettingId -azsubscriptionid xxxx-xxxx-xxxx-xxxx -azroledefinitionid xxxx-xxxx-xxxx-xxxx
     .OUTPUTS
-        Id                    : xxxx-xxxx-xxxx-xxxx
-        ResourceId            : xxxx-xxxx-xxxx-xxxx
-        RoleDefinitionId      : xxxx-xxxx-xxxx-xxxx
-        IsDefault             :
-        LastUpdatedDateTime   :
-        LastUpdatedBy         :
-        AdminEligibleSettings :
-        AdminMemberSettings   :
-        UserEligibleSettings  :
-        UserMemberSettings    :
+        $_.value:
+        Name                           Value
+        ----                           -----
+        lastUpdatedDateTime
+        roleDefinitionId               xxxx-xxxx-xxxx-xxxx
+        id                             xxxx-xxxx-xxxx-xxxx
+        adminMemberSettings            
+        lastUpdatedBy
+        resourceId                     xxxx-xxxx-xxxx-xxxx
+        adminEligibleSettings          
+        userMemberSettings             
+        userEligibleSettings           
+        isDefault                      True or False
     #>
     param(
         [Parameter (Mandatory = $true)]

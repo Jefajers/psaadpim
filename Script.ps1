@@ -16,7 +16,7 @@
     The Azure AD group object id in the following format (json):[{"ObjectId":"xxxx-xxxx-xxxx-xxxx"},{"ObjectId":"xxxx-xxxx-xxxx-xxxx"}]
     Can be collected by running Get-AzureADGroup and look for the ID matching the group that matches desired scope
 .PARAMETER onlyaddaadgroups
-    This parameter is optional and used to indicate if the job should skip the role setting stage.
+    This parameter is optional and used to indicate if the job should skip the role setting stage and only add aad groups to the role.
     When this parameter is set to $true the job will still try to onboard the subscription but skip the role setting stage and immediately start adding group to role.
 .PARAMETER assignmenttype
     The assignmenttype indicates if the group should be added as Eligible or Active (parameter is case sensitive)
