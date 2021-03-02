@@ -3,18 +3,18 @@ This asset is aimed at enabling Azure AD Priviliged Identity Management enrolmen
 Main target scenarios for this PowerShell function library and supporting wrapper script:
 - Azure Subscription enrolment into Azure AD PIM
 - Set Azure AD PIM Role Settings for Azure resources according to function baseline
-- Add Azure AD Groups as members of Azure roles controlled by Azure AD PIM 
+- Add Azure AD Groups as members of Azure roles controlled by Azure AD PIM at Subscription scope
 ## Prerequisites
 - PowerShell
 - Azure AD PIM license
 - Azure subscription to host the back-end service
 - Azure resource group
-- Dedicated service accounts (one Azure AD User Account and one SPN) to perform the highly privliged PIM actions. Enusre the identiies have the following permission:
+- Dedicated service accounts (one Azure AD User Account and one SPN) to perform the highly privliged PIM actions. Enusre the identities have the following permission:
     - Azure AD User Account:
         - Assign Azure AD Role "**Privileged Role administrator**"
-        - Assign Azure "**User Access Administrator**" role assigned on applicable Azure scope depening on your management group structure, recommendation: apply at root level.
+        - Assign Azure "**User Access Administrator**" role assigned on applicable Azure scope depening on your management group structure *(recommendation: apply at root level)*
     - SPN (modules assume SPN will authenticate with Secret not Certificate):
-        - Assign Azure "**Reader**" role assigned on applicable Azure scope depening on your management group structure, recommendation: apply at root level.
+        - Assign Azure "**Reader**" role assigned on applicable Azure scope depening on your management group structure *(recommendation: apply at root level)*
         - Azure Active Directory Graph
             - **Directory.Read.All** of Type:**Application**
         - Microsoft Graph
