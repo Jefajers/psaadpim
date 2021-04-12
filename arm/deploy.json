@@ -34,6 +34,24 @@
 			"type": "string",
 			"defaultValue": "pimsvc service account credential used by PSAADPim runbook"
 		},
+		"pimsvcspnclientid": {
+			"type": "string",
+			"defaultValue": "xxxx-xxxx-xxxx-xxxx",
+			"metadata": {
+				"description": "spn service account user name"
+			}
+		},
+		"pimsvcspncredential": {
+			"type": "securestring",
+			"defaultValue": "dummyvalue",
+			"metadata": {
+				"description": "spn service account password"
+			}
+		},
+		"pimsvcspndescription": {
+			"type": "string",
+			"defaultValue": "pimspnsvc spn service account credential used by PSAADPim runbook"
+		},
 		"ScriptPowerShellRunbookName": {
 			"type": "string",
 			"defaultValue": "Script"
@@ -84,7 +102,7 @@
 				}
 			},
 			{
-				"name": "pimsvc",
+				"name": "pimusersvc",
 				"type": "credentials",
 				"apiVersion": "2015-10-31",
 				"dependsOn": [
@@ -94,6 +112,19 @@
 					"userName": "[parameters('pimsvcusername')]",
 					"password": "[parameters('pimsvccredential')]",
 					"description": "[parameters('pimsvcdescription')]"
+				}
+			},
+			{
+				"name": "pimspnsvc",
+				"type": "credentials",
+				"apiVersion": "2015-10-31",
+				"dependsOn": [
+					"[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+				],
+				"properties": {
+					"userName": "[parameters('pimsvcspnclientid')]",
+					"password": "[parameters('pimsvcspncredential')]",
+					"description": "[parameters('pimsvcspndescription')]"
 				}
 			},
 			{

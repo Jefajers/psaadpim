@@ -16,10 +16,10 @@
     The Azure AD group object id in the following format (json):[{"ObjectId":"xxxx-xxxx-xxxx-xxxx"},{"ObjectId":"xxxx-xxxx-xxxx-xxxx"}]
     Can be collected by running Get-AzureADGroup and look for the ID matching the group that matches desired scope
 .PARAMETER onlyaddaadgroups
-    This parameter is optional and used to indicate if the job should skip the role setting stage.
+    This parameter is optional and used to indicate if the job should skip the role setting stage and only add aad groups to the role.
     When this parameter is set to $true the job will still try to onboard the subscription but skip the role setting stage and immediately start adding group to role.
 .PARAMETER assignmenttype
-    The assignmenttype indicates if the group should be added as Eligible or Active (this parameter is case sensitive)
+    The assignmenttype indicates if the group should be added as Eligible or Active (parameter is case sensitive)
 .EXAMPLE
     Using AZ modules to submit a job containing two az roles and two groups.
     $AZROLEDEFIDS = @(
@@ -40,10 +40,11 @@
 .OUTPUTS
     N/A
 #>
-#requires -modules AzureADPreview
 #requires -modules Az.Accounts
 #requires -modules Az.Automation
 #requires -modules Az.Resources
+#requires -modules Microsoft.Graph.Authentication
+#requires -modules Microsoft.Graph.Groups
 
 #Parameters
 [CmdletBinding(SupportsShouldProcess = $true)]
@@ -82,17 +83,17 @@ Allows permanent eligible assignment
 Requires MFA for eligible users
 #>
 $MediumProfile = @(
-    [pscustomobject]@{dimension = "AdminEligibleSettings"; name = "ExpirationRule"; value = '{"permanentAssignment":true,"maximumGrantPeriodInMinutes":525600}' },
-    [pscustomobject]@{dimension = "AdminEligibleSettings"; name = "MfaRule"; value = '{"mfaRequired":false}' },
-    [pscustomobject]@{dimension = "AdminMemberSettings"; name = "ExpirationRule"; value = '{"permanentAssignment":false,"maximumGrantPeriodInMinutes":259200}' },
-    [pscustomobject]@{dimension = "AdminMemberSettings"; name = "MfaRule"; value = '{"mfaRequired":false}' },
-    [pscustomobject]@{dimension = "AdminMemberSettings"; name = "JustificationRule"; value = '{"required":true}' },
-    [pscustomobject]@{dimension = "UserMemberSettings"; name = "ExpirationRule"; value = '{"permanentAssignment":true,"maximumGrantPeriodInMinutes":480}' },
-    [pscustomobject]@{dimension = "UserMemberSettings"; name = "MfaRule"; value = '{"mfaRequired":true}' },
-    [pscustomobject]@{dimension = "UserMemberSettings"; name = "JustificationRule"; value = '{"required":true}' },
-    [pscustomobject]@{dimension = "UserMemberSettings"; name = "TicketingRule"; value = '{"ticketingRequired":false}' },
-    [pscustomobject]@{dimension = "UserMemberSettings"; name = "ApprovalRule"; value = '{"Approvers":[]}' },
-    [pscustomobject]@{dimension = "UserMemberSettings"; name = "AcrsRule"; value = '{"acrsRequired":false,"acrs":null}' }
+    [pscustomobject]@{ "adminEligibleSettings" = @( @{ "ruleIdentifier" = "ExpirationRule"; "setting" = '{"permanentAssignment":true,"maximumGrantPeriodInMinutes":525600}' } ) },
+    [pscustomobject]@{ "adminEligibleSettings" = @( @{ "ruleIdentifier" = "MfaRule"; "setting" = '{"mfaRequired":false}' } ) },
+    [pscustomobject]@{ "adminMemberSettings" = @( @{ "ruleIdentifier" = "ExpirationRule"; "setting" = '{"permanentAssignment":false,"maximumGrantPeriodInMinutes":259200}' } ) },
+    [pscustomobject]@{ "adminMemberSettings" = @( @{ "ruleIdentifier" = "MfaRule"; "setting" = '{"mfaRequired":false}' } ) },
+    [pscustomobject]@{ "adminMemberSettings" = @( @{ "ruleIdentifier" = "JustificationRule"; "setting" = '{"required":true}' } ) },
+    [pscustomobject]@{ "userMemberSettings" = @( @{ "ruleIdentifier" = "ExpirationRule"; "setting" = '{"permanentAssignment":true,"maximumGrantPeriodInMinutes":480}' } ) },
+    [pscustomobject]@{ "userMemberSettings" = @( @{ "ruleIdentifier" = "MfaRule"; "setting" = '{"mfaRequired":true}' } ) },
+    [pscustomobject]@{ "userMemberSettings" = @( @{ "ruleIdentifier" = "JustificationRule"; "setting" = '{"required":true}' } ) },
+    [pscustomobject]@{ "userMemberSettings" = @( @{ "ruleIdentifier" = "TicketingRule"; "setting" = '{"ticketingRequired":false}' } ) },
+    [pscustomobject]@{ "userMemberSettings" = @( @{ "ruleIdentifier" = "ApprovalRule"; "setting" = '{"Approvers":[]}' } ) },
+    [pscustomobject]@{ "userMemberSettings" = @( @{ "ruleIdentifier" = "AcrsRule"; "setting" = '{"acrsRequired":false,"acrs":null}' } ) }
 )
 <#LightProfile:
 Allows permanent eligible assignment
@@ -100,17 +101,17 @@ Allows permanent active assignment
 Requires MFA for eligible users
 #>
 $LightProfile = @(
-    [pscustomobject]@{dimension = "AdminEligibleSettings"; name = "ExpirationRule"; value = '{"permanentAssignment":true,"maximumGrantPeriodInMinutes":525600}' },
-    [pscustomobject]@{dimension = "AdminEligibleSettings"; name = "MfaRule"; value = '{"mfaRequired":false}' },
-    [pscustomobject]@{dimension = "AdminMemberSettings"; name = "ExpirationRule"; value = '{"permanentAssignment":true,"maximumGrantPeriodInMinutes":259200}' },
-    [pscustomobject]@{dimension = "AdminMemberSettings"; name = "MfaRule"; value = '{"mfaRequired":false}' },
-    [pscustomobject]@{dimension = "AdminMemberSettings"; name = "JustificationRule"; value = '{"required":true}' },
-    [pscustomobject]@{dimension = "UserMemberSettings"; name = "ExpirationRule"; value = '{"permanentAssignment":true,"maximumGrantPeriodInMinutes":480}' },
-    [pscustomobject]@{dimension = "UserMemberSettings"; name = "MfaRule"; value = '{"mfaRequired":true}' },
-    [pscustomobject]@{dimension = "UserMemberSettings"; name = "JustificationRule"; value = '{"required":true}' },
-    [pscustomobject]@{dimension = "UserMemberSettings"; name = "TicketingRule"; value = '{"ticketingRequired":false}' },
-    [pscustomobject]@{dimension = "UserMemberSettings"; name = "ApprovalRule"; value = '{"Approvers":[]}' },
-    [pscustomobject]@{dimension = "UserMemberSettings"; name = "AcrsRule"; value = '{"acrsRequired":false,"acrs":null}' }
+    [pscustomobject]@{ "adminEligibleSettings" = @( @{ "ruleIdentifier" = "ExpirationRule"; "setting" = '{"permanentAssignment":true,"maximumGrantPeriodInMinutes":525600}' } ) },
+    [pscustomobject]@{ "adminEligibleSettings" = @( @{ "ruleIdentifier" = "MfaRule"; "setting" = '{"mfaRequired":false}' } ) },
+    [pscustomobject]@{ "adminMemberSettings" = @( @{ "ruleIdentifier" = "ExpirationRule"; "setting" = '{"permanentAssignment":true,"maximumGrantPeriodInMinutes":259200}' } ) },
+    [pscustomobject]@{ "adminMemberSettings" = @( @{ "ruleIdentifier" = "MfaRule"; "setting" = '{"mfaRequired":false}' } ) },
+    [pscustomobject]@{ "adminMemberSettings" = @( @{ "ruleIdentifier" = "JustificationRule"; "setting" = '{"required":true}' } ) },
+    [pscustomobject]@{ "userMemberSettings" = @( @{ "ruleIdentifier" = "ExpirationRule"; "setting" = '{"permanentAssignment":true,"maximumGrantPeriodInMinutes":480}' } ) },
+    [pscustomobject]@{ "userMemberSettings" = @( @{ "ruleIdentifier" = "MfaRule"; "setting" = '{"mfaRequired":true}' } ) },
+    [pscustomobject]@{ "userMemberSettings" = @( @{ "ruleIdentifier" = "JustificationRule"; "setting" = '{"required":true}' } ) },
+    [pscustomobject]@{ "userMemberSettings" = @( @{ "ruleIdentifier" = "TicketingRule"; "setting" = '{"ticketingRequired":false}' } ) },
+    [pscustomobject]@{ "userMemberSettings" = @( @{ "ruleIdentifier" = "ApprovalRule"; "setting" = '{"Approvers":[]}' } ) },
+    [pscustomobject]@{ "userMemberSettings" = @( @{ "ruleIdentifier" = "AcrsRule"; "setting" = '{"acrsRequired":false,"acrs":null}' } ) }
 )
 ####################
 #Connection section#
@@ -118,7 +119,7 @@ $LightProfile = @(
 try {
     #Connecting to Azure (at the time of writing backend supports User Accounts only)
     Write-Output -InputObject "Connecting to required Azure resources"
-    Connect-PimAz -AzAutomationCredentialName pimsvc -IdentityType user -AzADTenant pimtenantid
+    Connect-PimAz -AzAutomationCredentialUserName pimusersvc -AzAutomationCredentialSPNName pimspnsvc -AzADTenant pimtenantid
 }
 catch {
     Write-Error -Message $_
@@ -128,8 +129,14 @@ catch {
 #Execution section#
 ###################
 try {
-    #Convert input from json to ensure PowerShell can process it correct
+    #Convert input from json to ensure PowerShell can process it correct, AA has changed behaviour.
+    Write-Output -InputObject "Converting Azure Roledefinitionid's to json"
+    $azroledefids = $azroledefids | ConvertTo-Json
+    Write-Output -InputObject "Converting Azure Roledefinitionid's from json"
     $azroledefids = $azroledefids | ConvertFrom-Json
+    Write-Output -InputObject "Converting Azure ActiveDirectory Group id's to json"
+    $aadgroups = $aadgroups | ConvertTo-Json
+    Write-Output -InputObject "Converting Azure ActiveDirectory Group id's from json"
     $aadgroups = $aadgroups | ConvertFrom-Json
 }
 catch {

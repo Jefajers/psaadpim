@@ -1,8 +1,8 @@
-#region function section
+#start function section
 function Get-PimTime {
     <#
     .SYNOPSIS
-        Gets current system time and provides it back as Pim expect
+        Get current system time and provide it back as AADPim expect
     .EXAMPLE
         Get-PimTime
     .OUTPUTS
@@ -21,48 +21,54 @@ function Connect-PimAz {
     <#
     .SYNOPSIS
         Connect to required resources AzureAD and Azure
-    .PARAMETER AzAutomationCredentialName
-        The Azure Automation Credential name to be used
-    .PARAMETER IdentityType
-        Set service account type to be used by the function, either spn or user in the following format: [spn]/[user]
-        At the time or writing only User is supported at the backend
+    .PARAMETER AzAutomationCredentialUserName
+        The Azure Automation Credential user name to be used
+    .PARAMETER AzAutomationCredentialSPNName
+        The Azure Automation Credential spn name to be used
     .PARAMETER AzADTenant
-        Set service account type to be used by the function, either spn or user in the following format: [spn]/[user]
+        Azure AD Tenant ID: xxxx-xxxx-xxxx-xxxx
     .EXAMPLE
-        Connect-PimAz -AzAutomationCredentialName nameofcredential -IdentityType spn -AzADTenant xxxx-xxxx-xxxx-xxxx
+        Connect-PimAz -AzAutomationCredentialUserName <ReplaceWithNameofAzureAdUserCredential> -AzAutomationCredentialSPNName <ReplaceWithNameofSPNCredential> -IdentityType spn -AzADTenant xxxx-xxxx-xxxx-xxxx
     .OUTPUTS
         N/A
     #>
     param(
         [Parameter(Mandatory = $true)]
-        [string] $AzAutomationCredentialName,
+        [string] $AzAutomationCredentialUserName,
         [Parameter(Mandatory = $true)]
-        [string] $IdentityType,
+        [string] $AzAutomationCredentialSPNName,
         [Parameter(Mandatory = $true)]
         [string] $AzADTenant
     )
     try {
-        #Gather service account credential
-        $AzureAdPimCred = Get-AutomationPSCredential -Name $AzAutomationCredentialName
-        $AzureAdPimCredUserName = $AzureAdPimCred.Username
+        #Tenant
         $AzADTenant = Get-AutomationVariable -Name $AzADTenant
+        #Gather service user account credential
+        $AzureAdPimCredUser = Get-AutomationPSCredential -Name $AzAutomationCredentialUserName
+        $AzureAdPimCredUserName = $AzureAdPimCredUser.Username
+        #Gather service spn credential
+        $AzureAdPimCredSPN = Get-AutomationPSCredential -Name $AzAutomationCredentialSPNName
+        $AzureAdPimCredSPNName = $AzureAdPimCredSPN.Username
     }
     catch {
         $ErrorMessage = $_.Exception.Message
-        Write-Output -InputObject "Unable to gather service account credential, $ErrorMessage"
+        Write-Output -InputObject "Unable to gather service account credentials, $ErrorMessage"
         Write-Error -Message $_
         break
     }
     try {
-        #Get Azure AD token with graph
-        if ($IdentityType -eq 'spn') {
-            $Token = Invoke-RestMethod -Method Post -Uri "https://login.microsoftonline.com/$AzADTenant/oauth2/v2.0/token" `
-                -UseBasicParsing -ContentType "application/x-www-form-urlencoded" `
-                -Body "client_id=$AzureAdPimCredUserName&scope=https%3A%2F%2Fgraph.windows.net%2F.default&client_secret=$($AzureAdPimCred.GetNetworkCredential().Password)&grant_type=client_credentials"
-        }
-        else {
-
-        }
+        #Connect to AzureAD and get token
+        $resource = "https://graph.microsoft.com/"
+        $client_id = $AzureAdPimCredSPNName
+        $client_secret = $($AzureAdPimCredSPN.GetNetworkCredential().Password)
+        $authority = "https://login.microsoftonline.com/$AzADTenant"
+        $tokenEndpointUri = "$authority/oauth2/token"
+        $content = "grant_type=password&client_id=$client_id&client_secret=$client_secret&username=$AzureAdPimCredUserName&password=$($AzureAdPimCredUser.GetNetworkCredential().Password)&resource=$resource"
+        #Connect to login
+        $response = Invoke-RestMethod -Uri $tokenEndpointUri -Body $content -Method Post -UseBasicParsing
+        $accesstoken = $response.access_token
+        #Connect to the Graph
+        Connect-MgGraph -AccessToken $accesstoken -TenantId $AzADTenant
     }
     catch {
         $ErrorMessage = $_.Exception.Message
@@ -70,31 +76,9 @@ function Connect-PimAz {
         Write-Error -Message $_
         break
     }
-
-    try {
-        #Connect to Azure AD
-        if ($IdentityType -eq 'spn') {
-            Connect-AzureAD -TenantId $AzADTenant -AadAccessToken $Token.access_token -AccountId 'SPNConnection'
-        }
-        else {
-            Connect-AzureAD -TenantId $AzADTenant -Credential $AzureAdPimCred
-        }
-    }
-    catch {
-        $ErrorMessage = $_.Exception.Message
-        Write-Output -InputObject "Unable to connect to Azure AD, $ErrorMessage"
-        Write-Error -Message $_
-        break
-    }
-
     try {
         #Connect to Azure
-        if ($IdentityType -eq 'spn') {
-            Connect-AzAccount -ServicePrincipal -Credential $AzureAdPimCred -Tenant $AzADTenant
-        }
-        else {
-            Connect-AzAccount -Tenant $AzADTenant -Credential $AzureAdPimCred
-        }
+        Connect-AzAccount -ServicePrincipal -Credential $AzureAdPimCredSPN -Tenant $AzADTenant
     }
     catch {
         $ErrorMessage = $_.Exception.Message
@@ -112,11 +96,19 @@ function Get-PimAzSubscriptionId {
     .EXAMPLE
         Get-PimAzSubscriptionId -azsubscriptionid xxxx-xxxx-xxxx-xxxx
     .OUTPUTS
-        Id                  : xxxx-xxxx-xxxx-xxxx-xxxx
-        ExternalId          : /subscriptions/xxxx-xxxx-xxxx-xxxx-xxxx
-        Type                : subscription
-        DisplayName         : Displayname of subscription
-        Status              : Current status will be displayed here
+        $_.value:
+        Name                           Value
+        ----                           -----
+        originTenantId
+        id                             xxxx-xxxx-xxxx-xxxx-xxxx
+        displayName                    Displayname of subscription
+        managedAt
+        externalId                     /subscriptions/xxxx-xxxx-xxxx-xxxx-xxxx
+        registeredDateTime             xxxx
+        status                         Current status will be displayed here
+        onboardDateTime                xxxx
+        type                           subscription
+        registeredRoot
     #>
     param(
         [Parameter (Mandatory = $true)]
@@ -133,7 +125,10 @@ function Get-PimAzSubscriptionId {
     try {
         #Get PIM resourceid of the az subscription
         $subidfilterstring = "ExternalId eq '/subscriptions/$azsubscriptionid'"
-        $pimazsubid = Get-AzureADMSPrivilegedResource -ProviderId AzureResources -Filter $subidfilterstring | Select-Object Id, ExternalId, Type, DisplayName, Status
+        #Construct API Uri
+        $Uri = "https://graph.microsoft.com/beta/privilegedAccess/azureResources/resources?filter=$subidfilterstring"
+        #Call API
+        $pimazsubid = Invoke-GraphRequest -Uri $Uri -Method GET
         if ($pimazsubid -eq $null) {
             Write-Error -Message "Azure subscription $azsubscriptionid is not found in PIM"
             break
@@ -156,10 +151,15 @@ function Get-PimAzRoledefinitionId {
     .EXAMPLE
         Get-PimAzRoledefinitionId -azsubscriptionid xxxx-xxxx-xxxx-xxxx -azroledefinitionid xxxx-xxxx-xxxx-xxxx
     .OUTPUTS
-        Id                      : xxxx-xxxx-xxxx-xxxx
-        ResourceId              : xxxx-xxxx-xxxx-xxxx
-        ExternalId              : /subscriptions/xxxx-xxxx-xxxx-xxxx/providers/Microsoft.Authorization/roleDefinitions/xxxx-xxxx-xxxx-xxxx
-        DisplayName             : NameOfRole
+        $_.value:
+        Name                           Value
+        ----                           -----
+        resourceId                     xxxx-xxxx-xxxx-xxxx
+        type                           BuiltInRole or Custom
+        externalId                     /subscriptions/xxxx-xxxx-xxxx-xxxx/providers/Microsoft.Authorization/roleDefinitions/xxxx-xxxx-xxxx-xxxx
+        displayName                    Displayname of role
+        id                             xxxx-xxxx-xxxx-xxxx
+        templateId                     xxxx-xxxx-xxxx-xxxx
     #>
     param(
         [Parameter (Mandatory = $true)]
@@ -170,10 +170,10 @@ function Get-PimAzRoledefinitionId {
     try {
         #Get PIM resourceid of the az subscription
         $pimazsubid = Get-PimAzSubscriptionId -azsubscriptionid $azsubscriptionid
-        #Construct role id filter
-        $roleidfilterstring = "ExternalId eq '/subscriptions/$azsubscriptionid/providers/Microsoft.Authorization/roleDefinitions/$azroledefinitionid'"
-        #Get role information
-        $pimazroleid = Get-AzureADMSPrivilegedRoleDefinition -ProviderId AzureResources -ResourceId $pimazsubid.Id  -Filter $roleidfilterstring | Select-Object Id, ResourceId, ExternalId, DisplayName
+        #Construct API Uri to get role definition information
+        $Uri = "https://graph.microsoft.com/beta/privilegedAccess/azureResources/resources/$($pimazsubid.value.id)/roleDefinitions?filter=templateId+eq+'$azroledefinitionid'"        
+        #Call API
+        $pimazroleid = Invoke-GraphRequest -Uri $Uri -Method GET
         return $pimazroleid
     }
     catch {
@@ -192,16 +192,19 @@ function Get-PimAzRoleSettingId {
     .EXAMPLE
         Get-PimAzRoleSettingId -azsubscriptionid xxxx-xxxx-xxxx-xxxx -azroledefinitionid xxxx-xxxx-xxxx-xxxx
     .OUTPUTS
-        Id                    : xxxx-xxxx-xxxx-xxxx
-        ResourceId            : xxxx-xxxx-xxxx-xxxx
-        RoleDefinitionId      : xxxx-xxxx-xxxx-xxxx
-        IsDefault             :
-        LastUpdatedDateTime   :
-        LastUpdatedBy         :
-        AdminEligibleSettings :
-        AdminMemberSettings   :
-        UserEligibleSettings  :
-        UserMemberSettings    :
+        $_.value:
+        Name                           Value
+        ----                           -----
+        lastUpdatedDateTime
+        roleDefinitionId               xxxx-xxxx-xxxx-xxxx
+        id                             xxxx-xxxx-xxxx-xxxx
+        adminMemberSettings            
+        lastUpdatedBy
+        resourceId                     xxxx-xxxx-xxxx-xxxx
+        adminEligibleSettings          
+        userMemberSettings             
+        userEligibleSettings           
+        isDefault                      True or False
     #>
     param(
         [Parameter (Mandatory = $true)]
@@ -215,9 +218,11 @@ function Get-PimAzRoleSettingId {
         #Get PIM resourceid for the az roledefinitionid
         $pimazroleid = Get-PimAzRoledefinitionId -azsubscriptionid $azsubscriptionid -azroledefinitionid $azroledefinitionid
         #Construct rolesetting id filter
-        $rolesettingidstring = "ResourceId eq '$($pimazsubid.id)' and RoleDefinitionId eq '$($pimazroleid.id)'"
-        #Get role setting information
-        $pimazrolesettingid = Get-AzureADMSPrivilegedRoleSetting -ProviderId AzureResources -Filter $rolesettingidstring
+        $rolesettingidstring = "ResourceId eq '$($pimazsubid.value.id)' and RoleDefinitionId eq '$($pimazroleid.value.id)'"
+        #Construct API Uri to get role setting information
+        $Uri = "https://graph.microsoft.com/beta/privilegedAccess/azureResources/roleSettings?filter=$rolesettingidstring"
+        #Call API
+        $pimazrolesettingid = Invoke-GraphRequest -Uri $Uri -Method GET
         return $pimazrolesettingid
     }
     catch {
@@ -249,7 +254,7 @@ function Get-PimAzSubscriptionEnrolment {
     }
     try {
         #Check if Azure subscription is already enroled
-        $subenrollmentcheck = Get-AzRoleAssignment -Scope /subscriptions/$azsubscriptionid | Where-Object { $_.DisplayName -eq 'MS-PIM' }
+        $subenrollmentcheck = Get-AzRoleAssignment -Scope /subscriptions/$azsubscriptionid | Where-Object { $_.DisplayName -eq 'MS-PIM' }        
         return $subenrollmentcheck
     }
     catch {
@@ -271,21 +276,15 @@ function Register-PimAzSubscription {
         [Parameter(Mandatory = $true)]
         [guid]$azsubscriptionid
     )
-    #Get token from current Az Context
-    $currentAzureContext = Get-AzContext
-    $azureRmProfile = [Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureRmProfileProvider]::Instance.Profile;
-    $profileClient = New-Object Microsoft.Azure.Commands.ResourceManager.Common.RMProfileClient($azureRmProfile);
-    $token = $profileClient.AcquireAccessToken($currentAzureContext.Subscription.TenantId).AccessToken;
-    $authHeader = @{
-        'Content-Type'  = 'application/json'
-        'Authorization' = 'Bearer ' + $token
-    }
     try {
         #Construct API call body
-        $Body = @{externalId = "/subscriptions/$azsubscriptionid" }
-        #Call API to register subscription
-        $Uri = "https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/resources/register"
-        Invoke-RestMethod -Uri $Uri -Method POST -Headers $authHeader -Body ($Body | ConvertTo-Json)
+        $Body = @{    
+            "externalId" = "/subscriptions/$azsubscriptionid"
+        }
+        #Construct API Uri to register subscription
+        $Uri = "https://graph.microsoft.com/beta/privilegedAccess/azureResources/resources/register"
+        #Call API
+        Invoke-GraphRequest -Uri $uri -Method POST -Body ($Body | ConvertTo-Json)
     }
     catch {
         if ($_ -like "*The Role assignment already exists*") {
@@ -321,6 +320,7 @@ function New-PimAzSubscriptionEnrolment {
     }
     try {
         #Check if Azure subscription is already enroled
+        Write-Output -InputObject "Checking enrolment status of Azure subscription $azsubscriptionid"
         $subenrollmentcheck = Get-PimAzSubscriptionEnrolment $azsubscriptionid
     }
     catch {
@@ -334,8 +334,6 @@ function New-PimAzSubscriptionEnrolment {
     else {
         #Enroll subscription to Azure AD PIM
         Write-Output -InputObject "Enroling Azure subscription $azsubscriptionid into Azure AD PIM"
-        $subExternalId = "/subscriptions/$azsubscriptionid"
-        Add-AzureADMSPrivilegedResource -ProviderId AzureResources -ExternalId $subExternalId
         Register-PimAzSubscription -azsubscriptionid $azsubscriptionid
         Start-Sleep -Seconds 10
         try {
@@ -410,65 +408,21 @@ function Set-PimAzSubscriptionRoleSetting {
         }
         #Loop each desired role setting from baseline input
         foreach ($setting in $settingsprofile) {
-            Write-Output -InputObject "Processing setting $($setting.dimension), $($setting.name), $($setting.value)"
-            if ($setting.dimension -eq "AdminEligibleSettings") {
-
-                #Generate setting object
-                $settingobject = New-Object Microsoft.Open.MSGraph.Model.AzureADMSPrivilegedRuleSetting
-                #Populate setting object based on input
-                $settingobject.RuleIdentifier = "$($setting.name)"
-                $settingobject.Setting = "$($setting.value)"
+            Write-Output -InputObject "Processing settings..."
+                $Body = $setting
                 try {
-                    #Set Role settings
-                    Set-AzureADMSPrivilegedRoleSetting -ProviderId AzureResources -Id $pimazrolesettingid.Id -ResourceId $pimazsubid.Id -RoleDefinitionId $pimazroleid.Id -AdminEligibleSettings $settingobject
+                    #Construct API Uri to set role settings
+                    $Uri = "https://graph.microsoft.com/beta/privilegedAccess/azureResources/roleSettings/$($pimazrolesettingid.value.id)"
+                    #Call API
+                    Invoke-GraphRequest -Uri $uri -Method PATCH -Body ($Body | ConvertTo-Json -Depth 100)
                 }
                 catch {
-                    Write-Output -InputObject "Unable to set $setting in rolesetting $($pimazrolesettingid.Id), $ErrorMessage"
+                    Write-Output -InputObject "Unable to set $setting in rolesetting $($pimazrolesettingid.value.id), $ErrorMessage"
                     Write-Error -Message $_
                     break
                 }
-
-            }
-
-            if ($setting.dimension -eq "AdminMemberSettings") {
-
-                #Generate setting object
-                $settingobject = New-Object Microsoft.Open.MSGraph.Model.AzureADMSPrivilegedRuleSetting
-                #Populate setting object based on input
-                $settingobject.RuleIdentifier = "$($setting.name)"
-                $settingobject.Setting = "$($setting.value)"
-                try {
-                    #Set Role settings
-                    Set-AzureADMSPrivilegedRoleSetting -ProviderId AzureResources -Id $pimazrolesettingid.Id -ResourceId $pimazsubid.Id -RoleDefinitionId $pimazroleid.Id -AdminMemberSettings $settingobject
-                }
-                catch {
-                    Write-Output -InputObject "Unable to set $setting in rolesetting $($pimazrolesettingid.Id), $ErrorMessage"
-                    Write-Error -Message $_
-                    break
-                }
-
-            }
-
-            if ($setting.dimension -eq "UserMemberSettings") {
-
-                #Generate setting object
-                $settingobject = New-Object Microsoft.Open.MSGraph.Model.AzureADMSPrivilegedRuleSetting
-                #Populate setting object based on input
-                $settingobject.RuleIdentifier = "$($setting.name)"
-                $settingobject.Setting = "$($setting.value)"
-                try {
-                    #Set Role settings
-                    Set-AzureADMSPrivilegedRoleSetting -ProviderId AzureResources -Id $pimazrolesettingid.Id -ResourceId $pimazsubid.Id -RoleDefinitionId $pimazroleid.Id -UserMemberSettings $settingobject
-                }
-                catch {
-                    Write-Output -InputObject "Unable to set $setting in rolesetting $($pimazrolesettingid.Id), $ErrorMessage"
-                    Write-Error -Message $_
-                    break
-                }
-
-            }
-
         }
+
     }
 }
 function New-PimAzRoleAssignment {
@@ -526,7 +480,7 @@ function New-PimAzRoleAssignment {
             Write-Output -InputObject "Processing to add Azure AD Group: $($aadgroup.ObjectId) to role: $($roleid.Id) with assignmenttype: $assignmenttype"
             try {
                 #Validate Azure AD group id
-                $group = Get-AzureADGroup -ObjectId $aadgroup.ObjectId
+                $group = Get-MgGroup -GroupId $aadgroup.ObjectId
             }
             catch {
                 Write-Error -Message $_
@@ -535,53 +489,77 @@ function New-PimAzRoleAssignment {
             try {
                 if ($assignmenttype -eq "Eligible") {
                     #Check if group already added
-                    $groupstatefilterstring = "RoleDefinitionId eq '$($pimazroleid.Id)' and SubjectId eq '$($group.ObjectId)'"
-                    $groupstatecheck = Get-AzureADMSPrivilegedRoleAssignment -ProviderId AzureResources -ResourceId $pimazsubid.Id -Filter $groupstatefilterstring
-                    if ($groupstatecheck.AssignmentState -eq "Eligible") {
-                        Write-Output -InputObject "This group: $($group.ObjectId) with this role: $($roleid.Id) already seem to have an $assignmenttype assignment, skipping add operation. Please check this group assignment manually"
+                    $groupstatefilterstring = "ResourceId eq '$($pimazsubid.value.id)' and RoleDefinitionId eq '$($pimazroleid.value.id)' and SubjectId eq '$($group.Id)'"
+                    #Construct API Uri
+                    $Uri = "https://graph.microsoft.com/beta/privilegedAccess/azureResources/roleAssignments?filter=$groupstatefilterstring"
+                    #Call API
+                    $groupstatecheck = Invoke-GraphRequest -Uri $uri -Method GET
+                    if ($groupstatecheck.value.assignmentstate -eq "Eligible") {
+                        Write-Output -InputObject "This group: $($group.Id) with this role: $($roleid.Id) already seem to have an $assignmenttype assignment, skipping add operation. Please check this group assignment manually"
                     }
                     else {
                         #Generate schedule object
-                        $schedule = New-Object Microsoft.Open.MSGraph.Model.AzureADMSPrivilegedSchedule
-                        #Populate schedule object with current time
-                        $schedule.Type = "Once"
                         $timenow = Get-PimTime
-                        $schedule.StartDateTime = $timenow
+                        $scheduleType = "Once"
                         #Justification for assignment
-                        $justification = "AzureADPim enrollment service taking automated action to add aadgroup:$($group.ObjectId) in $assignmenttype state on azure role:$($roleid.Id)"
+                        $justification = "AzureADPim enrollment service taking automated action to add aadgroup:$($group.Id) in $assignmenttype state on azure role:$($roleid.Id)"
                         #Create role assignment configuration
-                        Open-AzureADMSPrivilegedRoleAssignmentRequest -ProviderId AzureResources -Schedule $schedule -ResourceId $pimazsubid.Id -RoleDefinitionId $pimazroleid.Id -SubjectId $group.ObjectId -AssignmentState $assignmenttype -Type "AdminAdd" -Reason $justification
+                        $Body = @(
+                            [pscustomobject]@{
+                                "roleDefinitionId" = "$($pimazroleid.value.id)";
+                                "resourceId" = "$($pimazsubid.value.id)";
+                                "subjectId" = "$($group.Id)";
+                                "assignmentState" = "$assignmenttype";
+                                "type" = "AdminAdd";
+                                "reason" = "$justification";
+                                "schedule" = @{ "startDateTime" = "$timenow"; "type" = "$scheduleType" }
+                            }
+                        )
+                        $Uri = "https://graph.microsoft.com/beta/privilegedAccess/azureResources/roleAssignmentRequests"
+                        Invoke-GraphRequest -Uri $uri -Method POST -Body ($Body | ConvertTo-Json -Depth 100)
                     }
-
                 }
                 if ($assignmenttype -eq "Active") {
                     #Check if group already added
-                    $groupstatefilterstring = "RoleDefinitionId eq '$($pimazroleid.Id)' and SubjectId eq '$($group.ObjectId)'"
-                    $groupstatecheck = Get-AzureADMSPrivilegedRoleAssignment -ProviderId AzureResources -ResourceId $pimazsubid.Id -Filter $groupstatefilterstring
-                    if ($groupstatecheck.AssignmentState -eq "Active") {
-                        Write-Output -InputObject "This group: $($group.ObjectId) with this role: $($roleid.Id) already seem to have an $assignmenttype assignment, skipping add operation. Please check this group assignment manually"
+                    $groupstatefilterstring = "ResourceId eq '$($pimazsubid.value.id)' and RoleDefinitionId eq '$($pimazroleid.value.id)' and SubjectId eq '$($group.Id)'"
+                    #Construct API Uri
+                    $Uri = "https://graph.microsoft.com/beta/privilegedAccess/azureResources/roleAssignments?filter=$groupstatefilterstring"
+                    #Call API
+                    $groupstatecheck = Invoke-GraphRequest -Uri $uri -Method GET
+                    if ($groupstatecheck.value.assignmentstate -eq "Active") {
+                        Write-Output -InputObject "This group: $($group.Id) with this role: $($roleid.Id) already seem to have an $assignmenttype assignment, skipping add operation. Please check this group assignment manually"
                     }
                     else {
                         #Generate schedule object
-                        $schedule = New-Object Microsoft.Open.MSGraph.Model.AzureADMSPrivilegedSchedule
-                        #Populate schedule object with current time
-                        $schedule.Type = "Once"
                         $timenow = Get-PimTime
-                        $schedule.StartDateTime = $timenow
+                        $scheduleType = "Once"
                         #Justification for assignment
-                        $justification = "AzureADPim enrollment service taking automated action to add aadgroup:$($group.ObjectId) in $assignmenttype state on azure role:$($roleid.Id)"
+                        $justification = "AzureADPim enrollment service taking automated action to add aadgroup:$($group.Id) in $assignmenttype state on azure role:$($roleid.Id)"
                         #Create role assignment configuration
-                        Open-AzureADMSPrivilegedRoleAssignmentRequest -ProviderId AzureResources -Schedule $schedule -ResourceId $pimazsubid.Id -RoleDefinitionId $pimazroleid.Id -SubjectId $group.ObjectId -AssignmentState $assignmenttype -Type "AdminAdd" -Reason $justification
+                        $Body = @(
+                            [pscustomobject]@{
+                                "roleDefinitionId" = "$($pimazroleid.value.id)";
+                                "resourceId" = "$($pimazsubid.value.id)";
+                                "subjectId" = "$($group.Id)";
+                                "assignmentState" = "$assignmenttype";
+                                "type" = "AdminAdd";
+                                "reason" = "$justification";
+                                "schedule" = @{ "startDateTime" = "$timenow"; "type" = "$scheduleType" }
+                            }
+                        )
+                        #Construct API Uri
+                        $Uri = "https://graph.microsoft.com/beta/privilegedAccess/azureResources/roleAssignmentRequests"
+                        #Call API
+                        Invoke-GraphRequest -Uri $uri -Method POST -Body ($Body | ConvertTo-Json -Depth 100)
                     }
-
                 }
             }
             catch {
-                Write-Output -InputObject "Unable to create role assignment for role $($pimazroleid.Id) and AAD group $($group.ObjectId) in Azure subscription $($pimazsubid.Id), $ErrorMessage"
+                Write-Output -InputObject "Unable to create role assignment for role $($pimazroleid.Id) and AAD group $($group.Id) in Azure subscription $($pimazsubid.Id), $ErrorMessage"
                 Write-Error -Message $_
                 break
             }
         }
     }
 }
-#endregion function section
+#end function section
